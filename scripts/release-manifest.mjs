@@ -16,9 +16,11 @@ const selected = {
 const platforms = {};
 for (const [platform, name] of Object.entries(selected)) {
   if (!name) continue;
+  // GitHub Release normalizes spaces in uploaded asset names to dots.
+  const uploadedName = name.replaceAll(" ", ".");
   platforms[platform] = {
-    name,
-    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(name)}`,
+    name: uploadedName,
+    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(uploadedName)}`,
     sha256: createHash("sha256").update(readFileSync(join(dir, name))).digest("hex")
   };
 }
