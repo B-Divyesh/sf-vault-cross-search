@@ -40,9 +40,9 @@ npm run build:site
 - App webview smoke test at 1180×760 and 390×844: no console errors and no serious/critical axe findings.
 - Release manifest generator was exercised with mock assets for all four required platform keys.
 - Installer shell script passes `sh -n`.
-- GitHub Actions run `33157439762` — PASS on all four native build jobs and the publish job.
+- GitHub Actions run `33159598856` — PASS on all four native build jobs and the publish job.
 - Release `v0.1.0` exists at <https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.0> with DMG arm64/x64, MSI/EXE, AppImage, DEB, `latest.json`, and `SHA256SUMS`.
-- Independently downloaded Windows setup checksum — PASS: `9175db8afe0f4f6029a2f8a8b1c65567edeb96d4573ffbff54f35dbd7a7167f4`.
+- Independently downloaded Windows setup checksum — PASS: `6041acecf86eba2f750068fa0b75b0a3b4eb4f559d0a9c5350ed37b96dc51503`.
 
 Bundle budgets:
 
