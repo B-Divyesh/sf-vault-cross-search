@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 test("landing page has one clear heading and working platform action", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-  await page.route("**/latest.json", (route) => route.fulfill({ json: { version: "v0.1.0", platforms: { "linux-x64": { name: "app.AppImage", url: "https://example.test/app.AppImage", sha256: "abc" }, "windows-x64": { name: "app.msi", url: "https://example.test/app.msi", sha256: "abc" }, "macos-x64": { name: "app.dmg", url: "https://example.test/app.dmg", sha256: "abc" }, "macos-arm64": { name: "app.dmg", url: "https://example.test/app.dmg", sha256: "abc" } } } }));
+  await page.route("https://api.github.com/**", (route) => route.fulfill({ json: { tag_name: "v0.1.0", assets: [{ name: "latest.json", browser_download_url: "https://example.test/latest.json" }, { name: "SHA256SUMS", browser_download_url: "https://example.test/SHA256SUMS" }, { name: "linux-x64-app.AppImage", browser_download_url: "https://example.test/app.AppImage" }, { name: "windows-x64-app-setup.exe", browser_download_url: "https://example.test/app.exe" }, { name: "macos-x64-app.dmg", browser_download_url: "https://example.test/app.dmg" }, { name: "macos-arm64-app.dmg", browser_download_url: "https://example.test/app.dmg" }] } }));
   await page.goto("/");
   await expect(page.locator("h1")).toHaveCount(1);
   await expect(page.locator("#download-button")).toHaveAttribute("href", /example\.test/);
@@ -20,9 +20,10 @@ test("landing and legal pages have no serious accessibility violations", async (
   }
 });
 
-test("download resolves from GitHub API when release manifest is blocked by CORS", async ({ page }) => {
-  await page.route("**/latest.json", (route) => route.abort());
+test("download resolves from the latest GitHub Release with checksum manifest", async ({ page }) => {
   await page.route("https://api.github.com/**", (route) => route.fulfill({ json: { tag_name: "v0.1.0", assets: [
+    { name: "latest.json", browser_download_url: "https://example.test/latest.json" },
+    { name: "SHA256SUMS", browser_download_url: "https://example.test/SHA256SUMS" },
     { name: "linux-x64-Vault.AppImage", browser_download_url: "https://example.test/Vault.AppImage" },
     { name: "windows-x64-Vault-setup.exe", browser_download_url: "https://example.test/Vault.AppImage" },
     { name: "macos-x64-Vault.dmg", browser_download_url: "https://example.test/Vault.AppImage" },

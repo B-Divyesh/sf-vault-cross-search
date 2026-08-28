@@ -30,7 +30,7 @@ npm run build:site
 
 - `npm test` — PASS
   - Vitest: 4/4 search, ranking, and safe-URL tests.
-  - Playwright 1.58.2: 7 pass across desktop and 390px mobile; 1 expected project-specific skip, including the GitHub API fallback for release-manifest CORS failures.
+  - Playwright 1.58.2: 7 pass across desktop and 390px mobile; 1 expected project-specific skip, including release API resolution that requires `latest.json` and `SHA256SUMS` to exist.
   - Axe: no serious/critical issues on landing, privacy, or terms pages in either viewport.
   - Rust: 4/4 session/privacy tests, including an encrypted KDBX 4 save/open/index round trip and proof that password/notes never enter serialized results.
 - `npm run typecheck` — PASS.
