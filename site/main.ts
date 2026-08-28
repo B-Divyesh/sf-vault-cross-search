@@ -2,6 +2,7 @@ import "./style.css";
 
 const repo = "https://github.com/B-Divyesh/sf-vault-cross-search";
 const manifestUrl = `${repo}/releases/latest/download/latest.json`;
+const releaseApiUrl = "https://api.github.com/repos/B-Divyesh/sf-vault-cross-search/releases/latest";
 type Asset = { url: string; name: string };
 type Manifest = { version: string; platforms: Record<string, Asset> };
 
@@ -30,8 +31,19 @@ async function resolveDownload() {
     button.href = asset.url;
     status.textContent = `Latest ${manifest.version} · SHA256 published`;
   } catch {
-    status.textContent = "Release assets are being prepared · view GitHub";
-    button.href = `${repo}/releases/latest`;
+    try {
+      const response = await fetch(releaseApiUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error("release unavailable");
+      const release = await response.json() as { tag_name: string; assets: Array<{ name: string; browser_download_url: string }> };
+      const prefix = `${target}-`;
+      const asset = release.assets.find(({ name }) => name.startsWith(prefix) && (target === "windows-x64" ? /-setup\.exe$|\.msi$/i.test(name) : target === "linux-x64" ? /\.AppImage$/i.test(name) : /\.dmg$/i.test(name)));
+      if (!asset) throw new Error("asset unavailable");
+      button.href = asset.browser_download_url;
+      status.textContent = `Latest ${release.tag_name} · SHA256 published`;
+    } catch {
+      status.textContent = "Release assets are being prepared · view GitHub";
+      button.href = `${repo}/releases/latest`;
+    }
   }
 }
 

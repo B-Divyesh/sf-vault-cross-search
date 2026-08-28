@@ -20,6 +20,18 @@ test("landing and legal pages have no serious accessibility violations", async (
   }
 });
 
+test("download resolves from GitHub API when release manifest is blocked by CORS", async ({ page }) => {
+  await page.route("**/latest.json", (route) => route.abort());
+  await page.route("https://api.github.com/**", (route) => route.fulfill({ json: { tag_name: "v0.1.0", assets: [
+    { name: "linux-x64-Vault.AppImage", browser_download_url: "https://example.test/Vault.AppImage" },
+    { name: "windows-x64-Vault-setup.exe", browser_download_url: "https://example.test/Vault.AppImage" },
+    { name: "macos-x64-Vault.dmg", browser_download_url: "https://example.test/Vault.AppImage" },
+    { name: "macos-arm64-Vault.dmg", browser_download_url: "https://example.test/Vault.AppImage" }
+  ] } }));
+  await page.goto("/");
+  await expect(page.locator("#download-button")).toHaveAttribute("href", "https://example.test/Vault.AppImage");
+});
+
 test("mobile layout keeps primary download visible", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile project only");
   await page.goto("/");

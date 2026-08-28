@@ -30,7 +30,7 @@ npm run build:site
 
 - `npm test` — PASS
   - Vitest: 4/4 search, ranking, and safe-URL tests.
-  - Playwright 1.58.2: 5 pass across desktop and 390px mobile; 1 expected project-specific skip.
+  - Playwright 1.58.2: 7 pass across desktop and 390px mobile; 1 expected project-specific skip, including the GitHub API fallback for release-manifest CORS failures.
   - Axe: no serious/critical issues on landing, privacy, or terms pages in either viewport.
   - Rust: 4/4 session/privacy tests, including an encrypted KDBX 4 save/open/index round trip and proof that password/notes never enter serialized results.
 - `npm run typecheck` — PASS.
@@ -40,6 +40,9 @@ npm run build:site
 - App webview smoke test at 1180×760 and 390×844: no console errors and no serious/critical axe findings.
 - Release manifest generator was exercised with mock assets for all four required platform keys.
 - Installer shell script passes `sh -n`.
+- GitHub Actions run `33157439762` — PASS on all four native build jobs and the publish job.
+- Release `v0.1.0` exists at <https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.0> with DMG arm64/x64, MSI/EXE, AppImage, DEB, `latest.json`, and `SHA256SUMS`.
+- Independently downloaded Windows setup checksum — PASS: `9175db8afe0f4f6029a2f8a8b1c65567edeb96d4573ffbff54f35dbd7a7167f4`.
 
 Bundle budgets:
 
@@ -63,7 +66,6 @@ Lighthouse 12.8.2 mobile against the production build:
 
 ## Needs operator action
 
-1. Push the committed `v0.1.0` tag and wait for `.github/workflows/release.yml`; verify every asset listed in `latest.json` and download one asset against `SHA256SUMS` before public launch.
-2. Register `vault-cross-search` with the Sociobot billing engine and set its return URL. Switch to the pilot API only if a staging registration is used.
-3. Commission an independent review of KDBX parsing, memory handling, Tauri IPC boundaries, and release provenance.
-4. Current installers are intentionally unsigned. For signed releases, provision `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, and `APPLE_SIGNING_IDENTITY` for macOS notarization, plus `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD` for Authenticode, then wire those names into the workflow and Tauri signing configuration. Never commit certificate material.
+1. Register `vault-cross-search` with the Sociobot billing engine and set its return URL. Switch to the pilot API only if a staging registration is used.
+2. Commission an independent review of KDBX parsing, memory handling, Tauri IPC boundaries, and release provenance.
+3. Current installers are intentionally unsigned. For signed releases, provision `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, and `APPLE_SIGNING_IDENTITY` for macOS notarization, plus `WINDOWS_CERT_PFX` and `WINDOWS_CERT_PASSWORD` for Authenticode, then wire those names into the workflow and Tauri signing configuration. Never commit certificate material.
