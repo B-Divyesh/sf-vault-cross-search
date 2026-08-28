@@ -1,0 +1,8 @@
+{
+  "slug": "vault-cross-search",
+  "title": "Vault Cross Search",
+  "artifact_class": "desktop-app",
+  "job": "Find an entry across several intentionally separate local KeePass-compatible vaults without merging them or copying secrets.",
+  "privacy_contract": "Explicit local unlock, metadata-only in-memory index, no secret fields returned to the webview, no telemetry, session lock and memory clearing.",
+  "non_goals": ["password storage", "autofill", "sync", "cloud accounts"]
+}
