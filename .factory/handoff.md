@@ -7,7 +7,7 @@
 - Session-only federated index containing only title, username, URL, and group path. The webview never receives passwords, notes, attachments, custom protected fields, or full vault paths.
 - Search ranking, URL redaction to hostname, keyboard flow (`Ctrl/⌘ K`, arrows, Enter, Escape, `Ctrl/⌘ L`), per-vault lock, global lock, tray lock, and 15-minute automatic timeout.
 - Result action validates the opaque entry ID and opens the owning vault through the OS-associated password app without touching the clipboard.
-- Free tier for two simultaneous vaults and a one-time Sociobot license for unlimited vaults. Includes hosted checkout, daily cached verification, optimistic offline state, returned-token storage, and paste-to-restore.
+- Free tier for two simultaneous vaults and a $19 one-time Sociobot license for unlimited vaults. Includes hosted checkout, daily cached verification, optimistic offline state, returned-token storage, and paste-to-restore.
 - Product-specific topographic cartography system with light/dark desktop themes, original generated hero art, app icons, reduced-motion handling, empty/error/offline states, and responsive 390px layouts.
 - Static download site in `dist/site`, OS detection, Release `latest.json` resolution, SHA256-verifying shell/PowerShell installers, privacy and terms pages, local fonts, and restrictive caching/security headers.
 - GitHub Actions release matrix for macOS arm64/x86_64, Windows x64, and Linux x64, producing DMG, MSI/EXE, AppImage, and DEB assets. The publish job adds `SHA256SUMS` and `latest.json` with `softprops/action-gh-release`.
@@ -62,7 +62,7 @@ Lighthouse 12.8.2 mobile against the production build:
 
 - KeePassXC does not expose a documented cross-platform API for focusing an exact GUI entry. The app opens the owning `.kdbx` in its associated password manager and keeps the matched title/group visible for the final navigation step. It never falls back to scripting the UI or exposing a secret through `keepassxc-cli`.
 - Version 0.1 has not had the independent security review required by the product brief. Do not represent it as audited until that review is complete.
-- The billing product/launch price is registered by the factory later; no product ID or price is hardcoded. Checkout therefore shows the authoritative price.
+- The billing product is registered by the factory later; no product ID is hardcoded. Configure its one-time price to match the product's displayed US$19 price before opening sales.
 
 ## Needs operator action
 
