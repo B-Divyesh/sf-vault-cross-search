@@ -175,9 +175,9 @@ mod tests {
     #[test]
     fn empty_session_is_locked() { let session = Session::default(); assert!(session.vaults.is_empty()); }
     #[test]
-    fn lock_clears_every_vault() { let mut session = Session::default(); session.touch(); session.clear(); assert!(session.vaults.is_empty() && session.last_access.is_none()); }
+    fn claim_session_lock_clears_every_vault() { let mut session = Session::default(); session.touch(); session.clear(); assert!(session.vaults.is_empty() && session.last_access.is_none()); }
     #[test]
-    fn index_collects_only_allowed_fields() {
+    fn claim_metadata_only_index_collects_only_allowed_fields() {
         let mut group = Group::new("Banking");
         let mut entry = Entry::new();
         entry.fields.insert("Title".into(), Value::Unprotected("Credit union".into()));
@@ -211,6 +211,24 @@ mod tests {
         assert_eq!(index.len(), 1);
         assert_eq!(index[0].group, "Work");
         assert_eq!(index[0].title, "Incident portal");
+    }
+    #[test]
+    fn invalid_unlock_does_not_prevent_valid_recovery() {
+        let db = Database::new(Default::default());
+        let mut bytes = Vec::new();
+        db.save(&mut bytes, DatabaseKey::new().with_password("correct horse")).unwrap();
+        assert!(Database::open(&mut std::io::Cursor::new(bytes.clone()), DatabaseKey::new().with_password("wrong password")).is_err());
+        assert!(Database::open(&mut std::io::Cursor::new(bytes), DatabaseKey::new().with_password("correct horse")).is_ok());
+    }
+    #[test]
+    fn claim_auto_lock_inactivity_expiry_locks_a_populated_session() {
+        assert_eq!(LOCK_AFTER, Duration::from_secs(15 * 60));
+        let mut session = Session::default();
+        session.vaults.push(OpenVault { id: "vault".into(), name: "Sample".into(), path: "/tmp/sample.kdbx".into(), entries: vec![IndexedEntry { id: "entry".into(), vault_id: "vault".into(), vault_name: "Sample".into(), title: "Sample entry".into(), username: "user".into(), url: "https://example.test".into(), group: "Root".into() }] });
+        session.last_access = Some(Instant::now() - LOCK_AFTER);
+        session.expire_if_needed();
+        assert!(session.vaults.is_empty());
+        assert!(session.last_access.is_none());
     }
 }
 

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "demo-search",
+    "claim": "The sample demo searches bundled metadata across three separate vaults.",
+    "where": "Demo route and landing-page first action",
+    "test": "npx playwright test --grep @claim:demo-search",
+    "sandbox": "Fresh browser context at /demo/; search acme; assert both Work.kdbx entries and ownership."
+  },
+  {
+    "id": "demo-isolation",
+    "claim": "Demo records use a separate browser-storage namespace and are discarded when starting for real.",
+    "where": "Demo banner",
+    "test": "npx playwright test --grep @claim:demo-isolation",
+    "sandbox": "Fresh browser context with a sentinel real-data key; enter /demo/; assert only demo:vault-cross-search:* is written; choose Start for real."
+  },
+  {
+    "id": "demo-reset",
+    "claim": "Reset demo restores the bundled sample data and clears the sample search.",
+    "where": "Demo banner",
+    "test": "npx playwright test --grep @claim:demo-reset",
+    "sandbox": "Fresh browser context at /demo/; search one known record; activate Reset demo; assert six bundled records return."
+  },
+  {
+    "id": "demo-privacy",
+    "claim": "The complete sample-demo flow sends no third-party requests.",
+    "where": "Demo banner and privacy policy",
+    "test": "npx playwright test --grep @claim:demo-privacy",
+    "sandbox": "Fresh browser context at /demo/; record all requests during search and reset; allow only the local site origin."
+  },
+  {
+    "id": "download-on-demand",
+    "claim": "The download page contacts GitHub only after a visitor chooses Download the desktop app.",
+    "where": "Landing-page download note and privacy policy",
+    "test": "npx playwright test --grep @claim:download-on-demand",
+    "sandbox": "Fresh browser context at /; intercept GitHub API; assert no cold-load request and one request after explicit download action."
+  },
+  {
+    "id": "metadata-only",
+    "claim": "The desktop index includes title, username, URL, and group path, not passwords or notes.",
+    "where": "Landing page, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_metadata_only_index_collects_only_allowed_fields",
+    "sandbox": "In-memory KeePass group with password and notes; serialize the index and assert protected content is absent."
+  },
+  {
+    "id": "session-lock",
+    "claim": "Lock all clears the desktop session index.",
+    "where": "Landing page, app UI, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_session_lock_clears_every_vault",
+    "sandbox": "In-memory session; invoke clear; assert the vault list and activity timestamp are empty."
+  },
+  {
+    "id": "auto-lock",
+    "claim": "The desktop app clears a populated session after 15 minutes of inactivity.",
+    "where": "Landing-page product facts and privacy policy",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_auto_lock_inactivity_expiry_locks_a_populated_session",
+    "sandbox": "Populated in-memory session with activity time exactly one timeout ago; expire it and assert no vaults or activity timestamp remain."
+  }
+]

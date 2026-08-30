@@ -4,6 +4,12 @@ Vault Cross Search is a local-first desktop utility for people who deliberately 
 
 Live download site: <https://vault-cross-search.sociobot.in>
 
+## Try the demo
+
+Open <https://vault-cross-search.sociobot.in/demo/> or choose **Try it with sample data** on the first screen. It loads six bundled records across Personal.kdbx, Work.kdbx, and Archive.kdbx; try searching acme, river, or operations.
+
+The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Reset demo** restores the bundled records. **Start for real** discards the demo key and returns to the download page. The demo never reads a vault file or makes a product API request.
+
 ## What it does
 
 - Reads explicitly selected KDBX 4 databases locally, with optional key files.
@@ -64,6 +70,8 @@ Please report security issues privately to `security@sociobot.in`.
 - `src/` — compact TypeScript desktop interface.
 - `site/` — static download, privacy, terms, and verified one-line installers.
 - `.factory/design.md` — product-specific visual system and generated-art provenance.
+- `.factory/claims.json` — executable, observable product claims.
+- `.factory/demo.md` — demo data, storage isolation, and reset behavior.
 - `.factory/handoff.md` — verification record and operator actions.
 
 ## License

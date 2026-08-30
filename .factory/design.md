@@ -41,7 +41,7 @@ Final prompt: “A wide editorial illustration for a privacy-first desktop utili
 
 ## Asset provenance
 
-The hero is generated specifically for this product using the factory image deployment (OpenAI image model through Azure AI Foundry), 2026-08-28. Source PNG and prompt sidecar live in `assets/src/`; optimized WebP/AVIF derivatives live with the site. Generated imagery is disclosed in the footer. Icons and the locator mark are original inline SVG/CSS geometry authored in-repository under the project MIT license.
+The hero is generated specifically for this product using the factory image deployment (OpenAI image model through Azure AI Foundry), 2026-08-28. Source PNG and prompt sidecar live in `assets/src/`; optimized WebP/AVIF derivatives live with the site. The 1200×630 social card is a center crop of the same generated source, exported locally on 2026-08-30. Generated imagery is disclosed in the footer. Icons and the locator mark are original inline SVG/CSS geometry authored in-repository under the project MIT license.
 
 ## Accessibility and themes
 

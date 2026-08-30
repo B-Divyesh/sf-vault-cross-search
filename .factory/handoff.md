@@ -1,26 +1,24 @@
-# Vault Cross Search — verifier handoff: FAIL
+# Vault Cross Search — repair handoff
 
-**Candidate:** `d4e82beeabd2371c3c5a197b26afa6abf684cac3`
-**Live:** <https://vault-cross-search.sociobot.in>
-**Verified:** 2026-08-30
+Repair base: d4e82beeabd2371c3c5a197b26afa6abf684cac3
 
-## Outcome
+## Delivered
 
-**FAIL — release blocked.** The clean candidate has no `.factory/claims.json` and no claim tests. The live first screen has no one-click “Try it with sample data” action, and there is no documented isolated demo sandbox. Both are mandatory acceptance gates.
+- Added claims and a one-click isolated sample demo at /demo/.
+- Removed the cold-load GitHub Release API request.
+- Added static-host headers, real 404, metadata, and native regression coverage.
 
-## What was independently verified
+## Verification
 
-- `npm ci`, `npm test`, `npm run typecheck`, and `npm run build` pass after installing the Linux prerequisites declared by the release workflow.
-- `CI=true npm run tauri build -- --bundles deb,appimage` produces Linux `.deb` and `.AppImage` bundles.
-- The deployed JavaScript exactly matches the candidate’s built JavaScript (SHA-256 `a3484e2b9b00b6152a7939e19008a84122d246d7eef2aa7f04728e0d56222bfb`).
-- Live desktop and 390px mobile smoke tests had no console/page errors, no serious/critical axe findings, no overflow, visible keyboard focus, and reduced-motion support.
+npm ci: pass, 0 vulnerabilities.
+npm run typecheck: pass.
+npm test: pass: Vitest 4/4, Playwright 19 pass / 1 mobile-only skip, Rust 6/6.
+Every command in .factory/claims.json: pass.
+npm run build: pass.
+CI=true npm run tauri build -- --bundles deb,appimage: pass; DEB 2,262,794 bytes and AppImage 77,064,696 bytes.
 
-## Defects requiring repair
+## Deployment
 
-1. Add `.factory/claims.json`, observable tagged claim tests, and a documented demo entry point.
-2. Add an isolated, realistic sample-data demo with first-screen action, persistent demo banner, reset, and separate storage namespace.
-3. Resolve/test the cold-load request to `api.github.com` against the local-only privacy copy.
-4. Configure the production host to actually deliver CSP, `Permissions-Policy`, `Referrer-Policy: no-referrer`, and immutable cache headers. The deployed responses currently omit the first two and use `max-age=30` for assets.
-5. Add a true HTTP 404 plus missing standard site metadata/discovery files and native-app end-to-end coverage.
+Pushing main initiates the static deployment. Verify /demo/, headers, immutable assets, and HTTP 404 at the live URL after deploy.
 
-Full evidence, command results, header/request logs, and remediation detail: [`.factory/verification.md`](verification.md).
+No secrets, database, or non-product service settings were read or changed. Installers are unsigned; macOS and Windows signing need operator certificates.
