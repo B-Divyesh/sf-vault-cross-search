@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { initialLicenseState, mayAddVault, needsLicenseRefresh, readCachedLicenseVerdict } from "./license";
 import { rankResults, safeDisplayUrl } from "./search";
 import type { LicenseState, SearchResult, SessionState, VaultSummary } from "./types";
 import "./style.css";
@@ -15,7 +16,8 @@ let state: SessionState = { vaults: [], locked: true, minutesRemaining: 15 };
 let results: SearchResult[] = [];
 let selected = 0;
 let query = "";
-let licenseState: LicenseState = localStorage.getItem(VERDICT_KEY)?.includes('"valid":true') ? "licensed" : "free";
+let cachedVerdict = readCachedLicenseVerdict(localStorage, VERDICT_KEY);
+let licenseState: LicenseState = initialLicenseState(cachedVerdict);
 let pendingPath = "";
 
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
@@ -126,7 +128,7 @@ async function chooseVault() {
     $("#status").textContent = "Install the desktop app to open local vaults.";
     return;
   }
-  if (state.vaults.length >= 2 && licenseState !== "licensed") {
+  if (!mayAddVault(state.vaults.length, licenseState)) {
     ($("#license-dialog") as HTMLDialogElement).showModal();
     return;
   }
@@ -179,12 +181,14 @@ async function verifyLicense(token: string, quiet = false) {
   try {
     const response = await fetch(`${API_BASE}/products/${SLUG}/verify?license=${encodeURIComponent(token)}`);
     const data = await response.json() as { valid: boolean; reason: string };
-    localStorage.setItem(VERDICT_KEY, JSON.stringify({ valid: data.valid, checkedAt: Date.now() }));
+    cachedVerdict = { valid: data.valid, checkedAt: Date.now() };
+    localStorage.setItem(VERDICT_KEY, JSON.stringify(cachedVerdict));
     if (!data.valid) throw new Error(data.reason === "revoked" ? "This license was refunded or revoked." : "That license is not active for this product.");
     localStorage.setItem(LICENSE_KEY, token); licenseState = "licensed";
     ($("#license-dialog") as HTMLDialogElement).close();
   } catch (error) {
-    licenseState = navigator.onLine ? "invalid" : "offline";
+    const cachedOfflineLicense = !navigator.onLine && cachedVerdict?.valid === true;
+    licenseState = cachedOfflineLicense ? "licensed" : navigator.onLine ? "invalid" : "offline";
     if (!quiet) $("#license-error").textContent = navigator.onLine ? String(error) : "You appear offline. Your cached license will keep working.";
   }
   render();
@@ -248,8 +252,7 @@ const returnedLicense = new URLSearchParams(location.search).get("license");
 if (returnedLicense) { localStorage.setItem(LICENSE_KEY, returnedLicense); history.replaceState({}, "", location.pathname); verifyLicense(returnedLicense, true); }
 else {
   const token = localStorage.getItem(LICENSE_KEY);
-  const cached = JSON.parse(localStorage.getItem(VERDICT_KEY) || "null") as { valid: boolean; checkedAt: number } | null;
-  if (token && (!cached || Date.now() - cached.checkedAt > 86_400_000)) verifyLicense(token, true);
+  if (token && needsLicenseRefresh(cachedVerdict)) verifyLicense(token, true);
 }
 refreshState();
 window.setInterval(refreshState, 30_000);

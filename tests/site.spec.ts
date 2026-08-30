@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { readFileSync } from "node:fs";
 
 test("@claim:demo-search searches bundled metadata across three separate sample vaults", async ({ page }) => {
   await page.goto("/demo/");
@@ -57,6 +58,94 @@ test("@claim:download-on-demand avoids GitHub until a visitor explicitly asks fo
   expect(githubRequests).toBe(0);
   await page.getByRole("link", { name: "Download the desktop app" }).click();
   await expect.poll(() => githubRequests).toBe(1);
+});
+
+test("@claim:site-resource-privacy loads site and policy pages without third-party resources", async ({ page }) => {
+  const externalRequests: string[] = [];
+  page.on("request", (request) => {
+    if (!request.url().startsWith("http://127.0.0.1:4173")) externalRequests.push(request.url());
+  });
+  for (const path of ["/", "/privacy/", "/terms/"]) await page.goto(path);
+  expect(externalRequests).toEqual([]);
+});
+
+test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, crash-reporting, or sync request", async ({ page }) => {
+  const externalRequests: string[] = [];
+  page.on("request", (request) => {
+    if (!request.url().startsWith("http://127.0.0.1:1420")) externalRequests.push(request.url());
+  });
+  await page.goto("http://127.0.0.1:1420/");
+  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  expect(externalRequests).toEqual([]);
+});
+
+test("@claim:license-verdict-storage stores a verified token verdict locally", async ({ page }) => {
+  let requests = 0;
+  await page.route("https://api.sociobot.in/api/v1/products/vault-cross-search/verify?license=fixture-token", async (route) => {
+    requests += 1;
+    await route.fulfill({ json: { valid: true, reason: "ok" } });
+  });
+  await page.goto("http://127.0.0.1:1420/?license=fixture-token");
+  await expect.poll(() => requests).toBe(1);
+  await expect(page).toHaveURL("http://127.0.0.1:1420/");
+  const stored = await page.evaluate(() => ({
+    token: localStorage.getItem("sb_license:vault-cross-search"),
+    verdict: JSON.parse(localStorage.getItem("sb_license:vault-cross-search:verdict") || "null")
+  }));
+  expect(stored.token).toBe("fixture-token");
+  expect(stored.verdict.valid).toBe(true);
+  expect(stored.verdict.checkedAt).toEqual(expect.any(Number));
+});
+
+test("@claim:license-revocation returns refunded or charged-back licenses to the free limit", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("sb_license:vault-cross-search", "revoked-fixture");
+    localStorage.setItem("sb_license:vault-cross-search:verdict", JSON.stringify({ valid: true, checkedAt: 0 }));
+  });
+  await page.route("https://api.sociobot.in/api/v1/products/vault-cross-search/verify?license=revoked-fixture", (route) => route.fulfill({ json: { valid: false, reason: "revoked" } }));
+  await page.goto("http://127.0.0.1:1420/");
+  await expect(page.locator("#license-label")).toHaveText("Free · 2 vaults");
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("sb_license:vault-cross-search:verdict") || "null").valid)).toBe(false);
+});
+
+test("@claim:offline-license-cache keeps a previously valid license active when verification is offline", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+    localStorage.setItem("sb_license:vault-cross-search", "offline-fixture");
+    localStorage.setItem("sb_license:vault-cross-search:verdict", JSON.stringify({ valid: true, checkedAt: 0 }));
+  });
+  await page.route("https://api.sociobot.in/**", (route) => route.abort("internetdisconnected"));
+  await page.goto("http://127.0.0.1:1420/");
+  await expect(page.locator("#license-label")).toHaveText("Licensed · unlimited");
+});
+
+test("@claim:license-scope keeps accessibility, session locking, and privacy code outside the paid gate", async ({ browser }) => {
+  const snapshots: Array<{ controls: string[]; serious: number }> = [];
+  for (const licensed of [false, true]) {
+    const context = await browser.newContext();
+    if (licensed) await context.addInitScript(() => localStorage.setItem("sb_license:vault-cross-search:verdict", JSON.stringify({ valid: true, checkedAt: Date.now() })));
+    const appPage = await context.newPage();
+    await appPage.goto("http://127.0.0.1:1420/");
+    const controls = await appPage.locator("#search-input, #add-vault, #lock-button, #theme-button").evaluateAll((nodes) => nodes.map((node) => node.id));
+    const axe = await new AxeBuilder({ page: appPage }).analyze();
+    snapshots.push({ controls, serious: axe.violations.filter((issue) => ["serious", "critical"].includes(issue.impact ?? "")).length });
+    await context.close();
+  }
+  expect(snapshots[0]).toEqual(snapshots[1]);
+  expect(snapshots[0].serious).toBe(0);
+  const productionCore = readFileSync("src-tauri/src/lib.rs", "utf8").split("#[cfg(test)]")[0].toLowerCase();
+  expect(productionCore).not.toContain("license");
+});
+
+test("malformed cached license verdict is discarded without stopping initialization", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("sb_license:vault-cross-search:verdict", "{broken"));
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("http://127.0.0.1:1420/");
+  await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", /light|dark/);
+  expect(await page.evaluate(() => localStorage.getItem("sb_license:vault-cross-search:verdict"))).toBeNull();
+  expect(errors).toEqual([]);
 });
 
 test("landing and legal pages have no serious accessibility violations", async ({ page }) => {

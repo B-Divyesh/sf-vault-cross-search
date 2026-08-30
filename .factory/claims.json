@@ -35,18 +35,60 @@
     "sandbox": "Fresh browser context at /; intercept GitHub API; assert no cold-load request and one request after explicit download action."
   },
   {
+    "id": "site-resource-privacy",
+    "claim": "The website and policy pages load no third-party scripts, fonts, trackers, advertising, or other resources.",
+    "where": "Privacy policy",
+    "test": "npx playwright test --grep @claim:site-resource-privacy",
+    "sandbox": "Fresh browser context; record requests across home, privacy, and terms; assert every request is same-origin."
+  },
+  {
     "id": "metadata-only",
-    "claim": "The desktop index includes title, username, URL, and group path, not passwords or notes.",
+    "claim": "The desktop index includes title, username, URL, and group path, not passwords, notes, attachments, or custom protected fields.",
     "where": "Landing page, privacy policy, README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_metadata_only_index_collects_only_allowed_fields",
-    "sandbox": "In-memory KeePass group with password and notes; serialize the index and assert protected content is absent."
+    "sandbox": "In-memory KeePass group containing every allowed field plus protected password, note, attachment bytes, and custom protected data; serialize and assert exact keys and values."
+  },
+  {
+    "id": "kdbx-unlock",
+    "claim": "The desktop core unlocks a KDBX 4 database and extracts its searchable metadata.",
+    "where": "README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml kdbx_round_trip_can_be_unlocked_and_indexed",
+    "sandbox": "Generate a KDBX 4 database in memory, save it with a fixture password, reopen it, and assert its title, username, and group metadata."
+  },
+  {
+    "id": "credential-clear",
+    "claim": "The Rust core clears its owned master-password buffer immediately after deriving the database key.",
+    "where": "Landing page, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_unlock_credential_is_cleared_after_key_derivation",
+    "sandbox": "Owned password string passed to the same key-derivation helper used by unlock_vault; assert its visible length is zero immediately after derivation."
+  },
+  {
+    "id": "database-drop",
+    "claim": "The decrypted database object is consumed during metadata extraction and is not retained in the session.",
+    "where": "README security model",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_decrypted_database_is_dropped_after_metadata_extraction",
+    "sandbox": "In-memory decrypted database with a protected secret; move it into extraction and assert the retained session value contains metadata but no database-only secret."
+  },
+  {
+    "id": "memory-only-index",
+    "claim": "The metadata index has no disk-persistence path and exists only in the current process session.",
+    "where": "Landing page, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_index_has_no_disk_persistence_path",
+    "sandbox": "Inspect the compiled Rust core boundary for write/create paths, populate the in-memory session, clear it, and assert no entries remain."
   },
   {
     "id": "session-lock",
-    "claim": "Lock all clears the desktop session index.",
-    "where": "Landing page, app UI, README",
+    "claim": "Lock all clears every populated desktop-session index.",
+    "where": "Landing page, app UI, privacy policy, README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_session_lock_clears_every_vault",
-    "sandbox": "In-memory session; invoke clear; assert the vault list and activity timestamp are empty."
+    "sandbox": "Populated in-memory session; invoke clear; assert the vault list and activity timestamp are empty."
+  },
+  {
+    "id": "single-vault-lock",
+    "claim": "Locking one vault clears that vault while leaving other unlocked vaults available.",
+    "where": "Landing page, app UI, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_single_vault_lock_clears_only_that_vault",
+    "sandbox": "Two-vault in-memory session; lock the first and assert only the second remains, then lock the second and assert the timestamp is cleared."
   },
   {
     "id": "auto-lock",
@@ -54,5 +96,82 @@
     "where": "Landing-page product facts and privacy policy",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_auto_lock_inactivity_expiry_locks_a_populated_session",
     "sandbox": "Populated in-memory session with activity time exactly one timeout ago; expire it and assert no vaults or activity timestamp remain."
+  },
+  {
+    "id": "quit-lock",
+    "claim": "Quitting the desktop app clears the populated session before exit.",
+    "where": "Landing page, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_quit_clears_the_populated_session",
+    "sandbox": "Populated in-memory session; invoke the exit cleanup used by Tauri RunEvent handling; assert no vaults or timestamp remain."
+  },
+  {
+    "id": "associated-open",
+    "claim": "Opening a result sends the owning vault path to the operating system's associated-app opener.",
+    "where": "Landing page and README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_associated_app_receives_the_owning_vault_path",
+    "sandbox": "Populated session with one indexed entry; invoke open through a recording opener; assert the owning .kdbx path is passed."
+  },
+  {
+    "id": "desktop-no-observation",
+    "claim": "Normal desktop use makes no analytics, telemetry, advertising, crash-reporting, or background-sync request.",
+    "where": "Landing page, privacy policy, README",
+    "test": "npx playwright test --grep @claim:desktop-no-observation",
+    "sandbox": "Fresh desktop-webview page; record requests while loading, changing theme, and opening license controls; assert no request leaves the local app origin."
+  },
+  {
+    "id": "no-secret-actions",
+    "claim": "The desktop app has no clipboard write, autofill, or password-persistence path.",
+    "where": "Landing page, privacy policy, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_desktop_has_no_clipboard_autofill_or_password_storage_paths",
+    "sandbox": "Inspect the shipped desktop UI and Rust core boundaries for clipboard, autofill, local password storage, and file-write APIs."
+  },
+  {
+    "id": "no-custody-sync",
+    "claim": "The product has no path to upload, recover, or synchronize vault contents.",
+    "where": "Landing page, terms, README",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_no_vault_custody_recovery_or_sync_path_exists",
+    "sandbox": "Inspect the shipped Rust core and desktop network boundary; assert vault access is read-only and the only fetch is explicit license verification."
+  },
+  {
+    "id": "free-vault-limit",
+    "claim": "The free edition accepts at most two simultaneous vaults.",
+    "where": "Landing pricing, app UI, terms, README",
+    "test": "npx vitest run src/license.test.ts -t @claim:free-vault-limit",
+    "sandbox": "Evaluate the production vault-count policy at zero, one, and two current vaults in free state."
+  },
+  {
+    "id": "licensed-vault-limit",
+    "claim": "A valid license removes the two-vault UI limit; checking, invalid, and offline-invalid states do not.",
+    "where": "Landing pricing, app UI, terms, README",
+    "test": "npx vitest run src/license.test.ts -t @claim:licensed-vault-limit",
+    "sandbox": "Evaluate the production vault-count policy at 25 vaults for every license state."
+  },
+  {
+    "id": "license-scope",
+    "claim": "A license changes the vault-count gate, not accessibility controls, session locking, or metadata privacy.",
+    "where": "Landing pricing, terms, README",
+    "test": "npx playwright test --grep @claim:license-scope",
+    "sandbox": "Fresh free and licensed webview contexts; compare controls, run axe, and assert the Rust safety core contains no license branch."
+  },
+  {
+    "id": "license-verdict-storage",
+    "claim": "After explicit license verification, only the token, verdict, and check time are stored in local webview storage.",
+    "where": "Privacy policy and app license dialog",
+    "test": "npx playwright test --grep @claim:license-verdict-storage",
+    "sandbox": "Intercept the billing verification request with a valid fixture response; assert the cleaned URL and local token, verdict, and numeric check time."
+  },
+  {
+    "id": "license-revocation",
+    "claim": "A refunded, charged-back, or otherwise revoked license returns the app to the free two-vault limit.",
+    "where": "Terms and app license error",
+    "test": "npx playwright test --grep @claim:license-revocation",
+    "sandbox": "Start with a stale valid fixture, intercept verification as revoked, and assert the cached verdict is false and the UI shows Free · 2 vaults."
+  },
+  {
+    "id": "offline-license-cache",
+    "claim": "A previously valid cached license remains active when daily verification cannot run offline.",
+    "where": "App license behavior",
+    "test": "npx playwright test --grep @claim:offline-license-cache",
+    "sandbox": "Start offline with a stale valid cached fixture, abort the verification request, and assert the app still shows Licensed · unlimited."
   }
 ]
