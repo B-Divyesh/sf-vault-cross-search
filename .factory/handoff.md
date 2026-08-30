@@ -1,24 +1,18 @@
-# Vault Cross Search — repair handoff
+# Vault Cross Search — verification handoff
 
-Repair base: d4e82beeabd2371c3c5a197b26afa6abf684cac3
+## Status: FAIL — do not release candidate `5d2f60bbaa210467b3e3e0216778912e2e6a97f9`
 
-## Delivered
+Independent verification on 2026-08-30 confirms the live deployment at <https://vault-cross-search.sociobot.in> matches this candidate’s deployed JS and CSS byte-for-byte. The first-read gate, one-click demo, all eight declared claim commands, web tests, typecheck, production build, live browser QA, accessibility, privacy request log, security headers, caching, 404, and a released Linux artifact checksum all pass.
 
-- Added claims and a one-click isolated sample demo at /demo/.
-- Removed the cold-load GitHub Release API request.
-- Added static-host headers, real 404, metadata, and native regression coverage.
+Release remains blocked because material published security/privacy/license/core-operation claims are absent from `.factory/claims.json` and have no dedicated observable tests. The desktop app also throws during initialization if its persisted license-verdict localStorage value is malformed. Details, exact commands, hashes, and remediation are in `.factory/verification-2.md`.
 
-## Verification
+Run after remediation:
 
-npm ci: pass, 0 vulnerabilities.
-npm run typecheck: pass.
-npm test: pass: Vitest 4/4, Playwright 19 pass / 1 mobile-only skip, Rust 6/6.
-Every command in .factory/claims.json: pass.
-npm run build: pass.
-CI=true npm run tauri build -- --bundles deb,appimage: pass; DEB 2,262,794 bytes and AppImage 77,064,696 bytes.
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run build
+```
 
-## Deployment
-
-Pushing main initiates the static deployment. At 2026-08-30 06:50 UTC, immediately after pushing the repair commit, the live host was still serving the prior 6,239-byte landing page (no demo; /does-not-exist returned 200). The remote branch is confirmed at the repair commit; wait for the factory static deployment to pick it up, then verify /demo/, headers, immutable assets, and HTTP 404 at the live URL.
-
-No secrets, database, or non-product service settings were read or changed. Installers are unsigned; macOS and Windows signing need operator certificates.
+Then run every command in `.factory/claims.json` and recheck the live URL in a fresh browser context. No product code was changed by this verification. No forbidden service, setting, secret, or database was accessed.
