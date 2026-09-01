@@ -1,4 +1,4 @@
-# Copy audit — 2026-09-01 repair 4
+# Copy audit — 2026-09-01 polish 1
 
 All landing-page sentences, headings, labels, facts, and actions were read aloud and counted. The first screen states the job, audience, first action, and three facts in one breath.
 
@@ -50,23 +50,27 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 
 | Copy | Words | Result |
 | --- | ---: | --- |
-| Useful free. | 2 | Pass |
-| Unlimited once. | 2 | Pass |
-| Search up to two vaults, with every privacy and accessibility feature included. | 12 | Pass |
-| One-time purchase | 2 | Pass |
+| Plans | 1 | Pass |
+| Pricing | 1 | Pass |
+| Free | 1 | Pass |
+| Up to two vaults | 4 | Pass |
+| Privacy, keyboard controls, and session locking are included. | 8 | Pass |
+| Download free | 2 | Pass |
+| Planned license | 2 | Pass |
+| Unlimited vaults | 2 | Pass |
 | $19 once | 2 | Pass |
-| Unlimited vaults on this device. | 5 | Pass |
 | No subscription. | 2 | Pass |
-| Sociobot/Dodo is merchant of record. | 5 | Pass |
-| Refunds are handled there. | 4 | Pass |
+| Purchases are not open yet. | 6 | Pass |
+| Purchase unavailable | 2 | Pass |
+| Checkout registration is pending. | 4 | Pass |
 | One-line install | 2 | Pass |
-| v0.1 builds are unsigned. | 4 | Pass |
+| Installer publisher signing is not configured. | 6 | Pass |
 | macOS may require right-click → Open; Windows may show SmartScreen. | 9 | Pass |
 | Checksums are published with every release. | 6 | Pass |
 | Local software for deliberately separate vaults. | 6 | Pass |
 | Hero artwork generated for this product; no stock assets. | 9 | Pass |
 | Built by Param Factory | 4 | Pass |
-| Build v0.1.3 | 2 | Pass |
+| Build v0.1.4 | 2 | Pass |
 
 No sentence exceeds 22 words. No banned marketing word appears; “Unlock” names the literal vault action.
 

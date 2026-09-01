@@ -1,28 +1,55 @@
-# Vault Cross Search — review 1 handoff
+# Vault Cross Search — perfection loop 1 handoff
 
-**Status: FAIL.** This review made no product-code changes.
+**Date:** 2026-09-01 UTC
 
-The complete independent report is [review-1.md](review-1.md). It records two blocking live defects:
+**Work order:** `vault-cross-search-polish-1`
 
-- The advertised Sociobot checkout link returns HTTP 404.
-- At 390 × 844, the demo’s initial screen does not yet show the search field or sample results.
+**Product:** `vault-cross-search` (`desktop-app`, Tauri 2 + static download site)
 
-It also records route-focus, mobile-Privacy navigation, plain-copy, and unlisted-claim findings.
+## What changed
 
-## Verification performed
+- Added the isolated one-click `/?demo=1` entry with a persistent banner, reset/exit controls, separate `demo:vault-cross-search:*` storage, and a useful prefilled search.
+- Reordered the 390px demo so its search field and two owned results appear before the vault list and within the first viewport.
+- Put all three privacy/lock facts before the hero artwork on phones and restored Privacy to mobile navigation.
+- Added route metadata checks, H1 focus plus polite announcement after navigation/Back, complete legal navigation, and a plain `Page not found` 404.
+- Replaced pricing lore with `Pricing`, `Free`, and `Unlimited vaults` plus literal price copy.
+- Removed the dead checkout link and every merchant/refund promise. Purchase is visibly unavailable until checkout registration exists; existing token restore remains available.
+- Added demo-native-boundary and installer-signing claims, narrowed unsupported README statements, and updated all claim tests.
+- Kept the product-specific topographic palette, typography, contours, locator mark, and generated artwork.
+- Bumped the desktop release to v0.1.4 and updated the release checksum fixtures.
 
-From a clean clone at `630fbc827ec8a6349553db3ccd1816f23781efc4`, after `npm ci --include=dev` and documented Linux Tauri prerequisites:
+## Verification
 
-```sh
-# All 30 exact commands declared in .factory/claims.json were run independently.
-npm test
-npm run build
-```
+- `npm test`: PASS — 9 Vitest, 50 Playwright passed with 10 intentional project skips, 16 Rust tests.
+- `npm run typecheck`: PASS.
+- `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`: PASS.
+- `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`: PASS.
+- `sh -n site/public/install.sh`: PASS.
+- `npm run build`: PASS; outputs `dist/app` and `dist/site`.
+- All 32 commands in `.factory/claims.json`: pending clean-clone rerun.
+- Playwright axe coverage: zero serious or critical issues on home, both demo entries, Privacy, Terms, and 404 at desktop and mobile sizes.
+- Local URL verifier: PASS; title, `lang=en`, one H1, main landmark, image alternatives, button labels, and no console errors.
+- Local mobile Lighthouse: performance 97, accessibility 100, best practices 100, SEO 100; LCP 1.98 s, CLS 0.089, TBT 0 ms, transfer 186,589 bytes.
+- Built site payload: JS 7,441 bytes raw; CSS 15,975 bytes raw; self-hosted fonts 109,604 bytes; mobile AVIF hero 64,037 bytes.
 
-Results: all declared claim commands passed; `npm test` passed (Vitest 9/9, Playwright 43 passed with 7 explicit desktop-only skips, Rust 16/16); and `npm run build` produced `dist/app` and `dist/site`.
+## Evidence
 
-The live site was checked in fresh 390px and desktop Chromium contexts, including demo isolation/reset/exit, request logging, 404, deep links, Back, link crawling, and Axe checks.
+- `.factory/polish-1.md` maps every review finding to its fix and checks.
+- `.factory/evidence/mobile-home-390x844.png`
+- `.factory/evidence/mobile-demo-390x844.png`
+- `.factory/evidence/desktop-home-1440x900.png`
+- `.factory/evidence/verify-local/verify.json`
+- `.factory/evidence/lighthouse-local.json`
 
-## Next step
+## Deployment and release
 
-Repair every finding in `.factory/review-1.md`, deploy the repair, and have a new reviewer rerun the full cold review. Do not treat passing local claim tests as a substitute for fixing the live checkout.
+Pending final commit, clean-clone claim run, v0.1.4 GitHub release, production deployment, and cold live verification.
+
+## Operator action
+
+- Register the product-specific Sociobot checkout before enabling a buy link. The product intentionally exposes no purchase link until that registration exists.
+- Add Apple and Windows publisher-signing certificates to the release workflow when available. Current installers clearly disclose that publisher signing is not configured.
+
+## Known gaps
+
+None in the shipped feature set. Checkout activation and publisher signing are explicitly unavailable operator-gated capabilities, not active product promises.

@@ -17,6 +17,8 @@ Vaults are separate territories. Search is the act of finding one landmark witho
 
 The desktop app is a two-territory workbench: a narrow vault rail and a broad search field. On phones it becomes a vertical expedition log; secondary metadata collapses but vault ownership never does. The primary sequence is always visible: add vault → unlock → search → open in KeePassXC. `⌘/Ctrl+K` focuses search, arrows traverse results, Enter opens, Escape clears, and `⌘/Ctrl+L` locks everything.
 
+The browser demo keeps this grammar but moves the active search territory above the vault index below 840px. At 390px, its prefilled search and two owned results fit in the first viewport. The landing page likewise puts its task, action, and three safety facts before the illustration on phones. Unavailable purchasing uses a quiet dashed map boundary instead of an active button.
+
 Layers have meaning: paper is passive, raised paper is actionable, pine signals an unlocked boundary, and the rust-orange survey pin signals the selected destination. Empty, locked, loading, offline-license, and error states each name the next action.
 
 ## Motion

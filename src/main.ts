@@ -31,14 +31,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   </header>
   <main id="main" class="workspace" tabindex="-1">
     <aside class="vault-rail" aria-labelledby="vault-heading">
-      <div class="section-heading"><div><p class="eyebrow">Local territories</p><h2 id="vault-heading">Vaults</h2></div><button id="add-vault" class="add-button" type="button"><span aria-hidden="true">＋</span> Add</button></div>
+      <div class="section-heading"><div><p class="eyebrow">Local vaults</p><h2 id="vault-heading">Vaults</h2></div><button id="add-vault" class="add-button" type="button"><span aria-hidden="true">＋</span> Add</button></div>
       <ul id="vault-list" class="vault-list"></ul>
       <div class="privacy-note"><span class="contour-dot" aria-hidden="true"></span><p><strong>Session only.</strong> Passwords and notes never enter this index.</p></div>
-      <button class="license-row" id="license-button" type="button"><span>Field license</span><strong id="license-label">Free · 2 vaults</strong></button>
+      <button class="license-row" id="license-button" type="button"><span>License options</span><strong id="license-label">Free · 2 vaults</strong></button>
     </aside>
     <section class="search-panel" aria-labelledby="search-heading">
-      <p class="eyebrow">Federated index · this device only</p>
-      <h1 id="search-heading">Find the right entry.<br><em>Keep every boundary.</em></h1>
+      <p class="eyebrow">Search index · this device only</p>
+      <h1 id="search-heading">Find an entry across unlocked vaults</h1>
       <div class="search-box">
         <span class="search-symbol" aria-hidden="true"></span>
         <label class="sr-only" for="search-input">Search unlocked vaults</label>
@@ -52,7 +52,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <dialog id="unlock-dialog" aria-labelledby="unlock-title">
     <form id="unlock-form" method="dialog">
       <button class="dialog-close" value="cancel" aria-label="Close unlock dialog" type="submit">×</button>
-      <p class="eyebrow">Open a local territory</p><h2 id="unlock-title">Unlock vault</h2>
+      <p class="eyebrow">Selected local file</p><h2 id="unlock-title">Unlock vault</h2>
       <p class="dialog-copy" id="vault-path"></p>
       <label for="vault-password">Master password</label><input id="vault-password" name="password" type="password" autocomplete="current-password" required />
       <label for="key-file">Key file <span>(optional)</span></label>
@@ -64,14 +64,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <dialog id="license-dialog" aria-labelledby="license-title">
     <form id="license-form" method="dialog">
       <button class="dialog-close" value="cancel" aria-label="Close license dialog" type="submit">×</button>
-      <p class="eyebrow">$19 one-time field license</p><h2 id="license-title">Search without borders</h2>
-      <p class="dialog-copy">The free app searches two vaults. A $19 one-time license enables unlimited vaults. No subscription.</p>
-      <a id="buy-license" class="primary-button link-button" href="https://api.sociobot.in/api/v1/products/vault-cross-search/checkout" target="_blank" rel="noreferrer">Buy a license</a>
-      <div class="rule"><span>or restore</span></div>
+      <p class="eyebrow">Unlimited vaults</p><h2 id="license-title">License options</h2>
+      <p class="dialog-copy">The free app searches two vaults. The planned unlimited-vault license is $19 once, with no subscription.</p>
+      <p class="purchase-unavailable" role="status"><strong>Purchase unavailable.</strong> Checkout registration is pending.</p>
+      <div class="rule"><span>Restore an existing license</span></div>
       <label for="license-token">License token</label><input id="license-token" type="text" autocomplete="off" spellcheck="false" />
       <p class="form-error" id="license-error" role="alert"></p>
       <button id="verify-license" type="button" class="primary-button">Verify license</button>
-      <p class="legal-small">Purchase handled by Sociobot/Dodo. <a href="https://vault-cross-search.sociobot.in/privacy">Privacy</a> · <a href="https://vault-cross-search.sociobot.in/terms">Terms</a></p>
+      <p class="legal-small"><a href="https://vault-cross-search.sociobot.in/privacy/">Privacy</a> · <a href="https://vault-cross-search.sociobot.in/terms/">Terms</a></p>
     </form>
   </dialog>
 `;
@@ -106,12 +106,12 @@ function renderResults() {
   }
   if (!query) {
     $("#status").textContent = `${state.vaults.length} unlocked vault${state.vaults.length === 1 ? "" : "s"} ready`;
-    host.innerHTML = `<div class="ready-state"><span class="locator" aria-hidden="true"></span><h2>Every marker is in range.</h2><p>Start typing to search metadata across all unlocked vaults. Try a site, username, or group.</p><div class="shortcut-grid"><span><kbd>↑</kbd><kbd>↓</kbd> Move</span><span><kbd>Enter</kbd> Open vault</span><span><kbd>Esc</kbd> Clear</span></div></div>`;
+    host.innerHTML = `<div class="ready-state"><span class="locator" aria-hidden="true"></span><h2>Vaults are ready to search.</h2><p>Start typing to search metadata across all unlocked vaults. Try a site, username, or group.</p><div class="shortcut-grid"><span><kbd>↑</kbd><kbd>↓</kbd> Move</span><span><kbd>Enter</kbd> Open vault</span><span><kbd>Esc</kbd> Clear</span></div></div>`;
     return;
   }
   $("#status").textContent = `${results.length} ${results.length === 1 ? "match" : "matches"} across ${state.vaults.length} vault${state.vaults.length === 1 ? "" : "s"}`;
   if (!results.length) {
-    host.innerHTML = `<div class="no-results"><span aria-hidden="true">⌁</span><h2>No marker found</h2><p>Try fewer terms, a username, or a domain. Secret values are intentionally not searchable.</p></div>`;
+    host.innerHTML = `<div class="no-results"><span aria-hidden="true">⌁</span><h2>No matching entry</h2><p>Try fewer terms, a username, or a domain. Secret values are intentionally not searchable.</p></div>`;
     return;
   }
   host.innerHTML = `<ol class="result-list" role="listbox" aria-label="Search results">${results.map((entry, index) => `<li><button class="result-row${index === selected ? " selected" : ""}" role="option" aria-selected="${index === selected}" data-result="${index}"><span class="result-pin" aria-hidden="true"></span><span class="result-main"><strong>${escapeHtml(entry.title || "Untitled entry")}</strong><small>${escapeHtml(entry.username || "No username")} · ${escapeHtml(safeDisplayUrl(entry.url))}</small></span><span class="result-vault"><small>${escapeHtml(entry.group || "Root")}</small><strong>${escapeHtml(entry.vaultName)}</strong></span><span class="result-open" aria-hidden="true">↗</span></button></li>`).join("")}</ol>`;
@@ -183,7 +183,7 @@ async function verifyLicense(token: string, quiet = false) {
     const data = await response.json() as { valid: boolean; reason: string };
     cachedVerdict = { valid: data.valid, checkedAt: Date.now() };
     localStorage.setItem(VERDICT_KEY, JSON.stringify(cachedVerdict));
-    if (!data.valid) throw new Error(data.reason === "revoked" ? "This license was refunded or revoked." : "That license is not active for this product.");
+    if (!data.valid) throw new Error(data.reason === "revoked" ? "This license was revoked." : "That license is not active for this product.");
     localStorage.setItem(LICENSE_KEY, token); licenseState = "licensed";
     ($("#license-dialog") as HTMLDialogElement).close();
   } catch (error) {
@@ -205,11 +205,11 @@ document.addEventListener("click", async (event) => {
 
 $("#lock-button").addEventListener("click", lockAll);
 $("#license-button").addEventListener("click", () => ($("#license-dialog") as HTMLDialogElement).showModal());
-$("#buy-license").addEventListener("click", async (event) => {
+document.querySelectorAll<HTMLAnchorElement>(".legal-small a").forEach((link) => link.addEventListener("click", async (event) => {
   if (!isTauri) return;
   event.preventDefault();
-  await openUrl(`${API_BASE}/products/${SLUG}/checkout`);
-});
+  await openUrl(link.href);
+}));
 $("#theme-button").addEventListener("click", () => {
   const dark = document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "light" : "dark";

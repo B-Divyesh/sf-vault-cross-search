@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 
+const DEMO_URL = "/?demo=1";
+
 async function installDesktopFixture(page: import("@playwright/test").Page, options: { multiVault?: boolean } = {}) {
   await page.addInitScript((multiVault) => {
     const openedEntries: unknown[] = [];
@@ -40,7 +42,9 @@ async function installDesktopFixture(page: import("@playwright/test").Page, opti
 }
 
 test("@claim:demo-search searches bundled metadata across three separate sample vaults", async ({ page }) => {
-  await page.goto("/demo/");
+  await page.goto("/");
+  await page.getByRole("link", { name: "Try it with sample data" }).click();
+  await expect(page).toHaveURL(/\?demo=1$/);
   await expect(page.getByRole("heading", { name: "Find an entry across separate vaults" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Three separate vaults" })).toBeVisible();
   await page.getByLabel("Search sample vault metadata").fill("acme");
@@ -52,7 +56,7 @@ test("@claim:demo-search searches bundled metadata across three separate sample 
 
 test("@claim:demo-isolation keeps sample data in its own storage namespace", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("vault-cross-search:real-vault-list", "do-not-touch"));
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   expect(await page.evaluate(() => localStorage.getItem("vault-cross-search:real-vault-list"))).toBe("do-not-touch");
   const keys = await page.evaluate(() => Object.keys(localStorage));
   expect(keys).toContain("demo:vault-cross-search:sample-v1");
@@ -64,7 +68,7 @@ test("@claim:demo-isolation keeps sample data in its own storage namespace", asy
 });
 
 test("@claim:demo-reset restores the realistic sample from a clean query", async ({ page }) => {
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   const input = page.getByLabel("Search sample vault metadata");
   await input.fill("northstar");
   await expect(page.locator("#demo-results")).toContainText("Northstar credit union");
@@ -79,12 +83,29 @@ test("@claim:demo-privacy sends no third-party requests during the complete samp
   page.on("request", (request) => {
     if (!request.url().startsWith("http://127.0.0.1:4173")) externalRequests.push(request.url());
   });
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   await page.getByLabel("Search sample vault metadata").fill("river");
   await page.getByRole("button", { name: "Reset demo" }).click();
   await page.getByRole("link", { name: "Start for real" }).click();
   await expect(page).toHaveURL(/\/$/);
   expect(externalRequests).toEqual([]);
+});
+
+test("@claim:demo-boundary uses no native vault or file access", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.assign(window, {
+      __demoBoundaryCalls: [] as string[],
+      showOpenFilePicker: () => { (window as unknown as { __demoBoundaryCalls: string[] }).__demoBoundaryCalls.push("file-picker"); },
+      __TAURI_INTERNALS__: {
+        invoke: (command: string) => { (window as unknown as { __demoBoundaryCalls: string[] }).__demoBoundaryCalls.push(`native:${command}`); }
+      }
+    });
+  });
+  await page.goto(DEMO_URL);
+  await page.getByLabel("Search sample vault metadata").fill("river");
+  await page.getByRole("button", { name: "Reset demo" }).click();
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { __demoBoundaryCalls: string[] }).__demoBoundaryCalls)).toEqual([]);
 });
 
 test("@claim:download-on-demand avoids GitHub until a visitor explicitly asks for a download", async ({ page }) => {
@@ -117,8 +138,8 @@ test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, 
   await installDesktopFixture(page);
   await page.goto("http://127.0.0.1:1420/");
   await page.getByRole("button", { name: "Toggle color theme" }).click();
-  await page.getByRole("button", { name: "Field license" }).click();
-  await expect(page.getByRole("dialog", { name: "Search without borders" })).toBeVisible();
+  await page.getByRole("button", { name: "License options" }).click();
+  await expect(page.getByRole("dialog", { name: "License options" })).toBeVisible();
   await page.getByRole("button", { name: "Close license dialog" }).click();
   await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
   await page.getByLabel("Search unlocked vaults").fill("acme");
@@ -164,25 +185,26 @@ test("@claim:desktop-multi-vault-search searches two unlocked desktop vaults and
   await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: Array<Record<string, string>> }).__openedEntries[0])).toEqual({ vaultId: "personal", entryId: "billing" });
 });
 
-test("@claim:one-time-pricing protects the price, terms, and checkout target", async ({ page }, testInfo) => {
+test("@claim:one-time-pricing shows literal pricing while purchase remains unavailable", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "desktop license dialog claim");
-  const checkout = "https://api.sociobot.in/api/v1/products/vault-cross-search/checkout";
   await page.goto("/");
   await expect(page.getByText("$19 once", { exact: true })).toBeVisible();
-  await expect(page.getByText("One-time purchase", { exact: true })).toBeVisible();
-  await expect(page.getByText("Unlimited vaults on this device. No subscription.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Buy a license" })).toHaveAttribute("href", checkout);
+  await expect(page.getByText("No subscription. Purchases are not open yet.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Purchase unavailable", { exact: true })).toBeVisible();
+  await expect(page.locator('a[href*="/checkout"]')).toHaveCount(0);
   await page.goto("http://127.0.0.1:1420/");
-  await page.getByRole("button", { name: "Field license" }).click();
-  await expect(page.getByRole("dialog", { name: "Search without borders" })).toContainText("$19 one-time license");
-  await expect(page.getByRole("dialog", { name: "Search without borders" })).toContainText("No subscription.");
-  await expect(page.getByRole("link", { name: "Buy a license" })).toHaveAttribute("href", checkout);
+  await page.getByRole("button", { name: "License options" }).click();
+  const dialog = page.getByRole("dialog", { name: "License options" });
+  await expect(dialog).toContainText("$19 once, with no subscription");
+  await expect(dialog).toContainText("Purchase unavailable");
+  await expect(dialog.locator('a[href*="/checkout"]')).toHaveCount(0);
   await page.goto("/terms/");
-  await expect(page.locator("main")).toContainText("A $19 one-time purchase enables unlimited vaults");
-  await expect(page.locator("main")).toContainText("There is no subscription.");
+  await expect(page.locator("main")).toContainText("The planned unlimited-vault license is $19 once, with no subscription.");
+  await expect(page.locator("main")).toContainText("Purchases are not open while checkout registration is pending.");
   const readme = readFileSync("README.md", "utf8");
-  expect(readme).toContain("A $19 one-time license enables unlimited vaults");
-  expect(readme).toContain("There is no subscription.");
+  expect(readme).toContain("The planned unlimited-vault license is $19 once, with no subscription.");
+  expect(readme).toContain("Purchases remain unavailable until checkout registration is complete.");
+  expect(readFileSync("site/index.html", "utf8") + readFileSync("src/main.ts", "utf8")).not.toContain("/checkout");
 });
 
 test("@claim:license-verdict-storage stores a verified token verdict locally", async ({ page }) => {
@@ -203,7 +225,7 @@ test("@claim:license-verdict-storage stores a verified token verdict locally", a
   expect(stored.verdict.checkedAt).toEqual(expect.any(Number));
 });
 
-test("@claim:license-revocation returns refunded or charged-back licenses to the free limit", async ({ page }) => {
+test("@claim:license-revocation returns revoked licenses to the free limit", async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem("sb_license:vault-cross-search", "revoked-fixture");
     localStorage.setItem("sb_license:vault-cross-search:verdict", JSON.stringify({ valid: true, checkedAt: 0 }));
@@ -255,7 +277,7 @@ test("malformed cached license verdict is discarded without stopping initializat
 });
 
 test("landing and legal pages have no serious accessibility violations", async ({ page }) => {
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
+  for (const path of ["/", DEMO_URL, "/demo/", "/privacy/", "/terms/", "/404.html"]) {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((issue) => ["serious", "critical"].includes(issue.impact ?? ""))).toEqual([]);
@@ -265,15 +287,15 @@ test("landing and legal pages have no serious accessibility violations", async (
 test("desktop and mobile routes load without browser console errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) await page.goto(path);
+  for (const path of ["/", DEMO_URL, "/demo/", "/privacy/", "/terms/", "/404.html"]) await page.goto(path);
   expect(errors).toEqual([]);
 });
 
 test("demo is operable by keyboard", async ({ page }) => {
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
   await expect(page.getByLabel("Search sample vault metadata")).toBeFocused();
-  await page.keyboard.type("operations");
+  await page.getByLabel("Search sample vault metadata").fill("operations");
   await expect(page.locator("#demo-results")).toContainText("Cloud console");
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
@@ -281,7 +303,7 @@ test("demo is operable by keyboard", async ({ page }) => {
 });
 
 test("demo keyboard focus has a visible three-pixel treatment", async ({ page }) => {
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   const input = page.getByLabel("Search sample vault metadata");
   const container = input.locator("..");
   const before = await container.evaluate((element) => {
@@ -303,15 +325,30 @@ test("demo keyboard focus has a visible three-pixel treatment", async ({ page })
 
 test("mobile demo keeps its primary controls and results within 390px", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile project only");
-  await page.goto("/demo/");
+  await page.goto(DEMO_URL);
   await expect(page.getByRole("button", { name: "Reset demo" })).toBeVisible();
+  await expect(page.getByLabel("Search sample vault metadata")).toBeInViewport();
+  for (const result of [page.locator("#demo-results li").nth(0), page.locator("#demo-results li").nth(1)]) {
+    await expect(result).toBeInViewport();
+    await expect(result).toContainText("Acme");
+    await expect(result).toContainText("Work.kdbx");
+  }
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
+});
+
+test("mobile first screen shows all three product facts and Privacy navigation", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "mobile project only");
+  await page.goto("/");
+  await expect(page.locator("header").getByRole("link", { name: "Privacy" })).toBeVisible();
+  for (const fact of ["Sample data stays separate", "Passwords are not indexed", "Desktop app locks after inactivity"]) {
+    await expect(page.getByText(fact, { exact: true })).toBeInViewport();
+  }
 });
 
 test("demo keeps result metadata visible at 720px and the 200% zoom width proxy", async ({ page }) => {
   for (const width of [720, 195]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/demo/");
+    await page.goto(DEMO_URL);
     const layout = await page.evaluate(() => {
       const clipped = [...document.querySelectorAll<HTMLElement>("#demo-results li > span:nth-child(2) strong, #demo-results li > span:nth-child(2) small, #demo-results li > span:nth-child(3) strong, #demo-results li > span:nth-child(3) small")]
         .filter((element) => element.scrollWidth > element.clientWidth + 1)
@@ -325,7 +362,7 @@ test("demo keeps result metadata visible at 720px and the 200% zoom width proxy"
 
 test("all public controls meet the 44px mobile target minimum", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile project only");
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
+  for (const path of ["/", DEMO_URL, "/demo/", "/privacy/", "/terms/", "/404.html"]) {
     await page.goto(path);
     const undersized = await page.locator("a[href], button, input").evaluateAll((elements) => elements
       .filter((element) => (element as HTMLElement).checkVisibility())
@@ -339,13 +376,13 @@ test("all public controls meet the 44px mobile target minimum", async ({ page },
 });
 
 test("every public route uses the standard skip, header, footer, and build shell", async ({ page }) => {
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
+  for (const path of ["/", DEMO_URL, "/demo/", "/privacy/", "/terms/", "/404.html"]) {
     await page.goto(path);
     await expect(page.locator("main")).toHaveCount(1);
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator("header.site-header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
-    await expect(page.getByText("Built by Param Factory · Build v0.1.3", { exact: true })).toBeVisible();
+    await expect(page.getByText("Built by Param Factory · Build v0.1.4", { exact: true })).toBeVisible();
     const skip = page.locator(".skip-link");
     await expect(skip).toHaveAttribute("href", "#main");
     await page.keyboard.press("Tab");
@@ -353,6 +390,51 @@ test("every public route uses the standard skip, header, footer, and build shell
     await page.keyboard.press("Enter");
     await expect(page.locator("#main")).toBeFocused();
   }
+});
+
+test("real routes set distinct titles, metadata, and focus headings after navigation and Back", async ({ page }) => {
+  const expected = [
+    { path: "/", title: "Vault Cross Search — find entries across local vaults", h1: "Find an entry across separate vaults" },
+    { path: DEMO_URL, title: "Demo — Vault Cross Search", h1: "Find an entry across separate vaults" },
+    { path: "/privacy/", title: "Privacy — Vault Cross Search", h1: "Privacy" },
+    { path: "/terms/", title: "Terms — Vault Cross Search", h1: "Terms" },
+    { path: "/404.html", title: "Page not found — Vault Cross Search", h1: "Page not found" }
+  ];
+  for (const route of expected) {
+    await page.goto(route.path);
+    await expect(page).toHaveTitle(route.title);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /\S+/);
+    await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", route.title);
+    await expect(page.locator('meta[name="twitter:title"]')).toHaveAttribute("content", route.title);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(route.h1);
+  }
+  await page.goto("/");
+  await page.locator("header").getByRole("link", { name: "Privacy" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Privacy" })).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole("heading", { level: 1, name: "Find an entry across separate vaults" })).toBeFocused();
+  await expect(page.locator("#route-announcer")).toContainText("page loaded");
+});
+
+test("same-origin navigation and desktop legal links have real destinations", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "link crawl runs once");
+  const paths = ["/", DEMO_URL, "/demo/", "/privacy/", "/terms/", "/404.html"];
+  const destinations = new Set<string>();
+  for (const path of paths) {
+    await page.goto(path);
+    for (const href of await page.locator('a[href]').evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href))) {
+      const url = new URL(href);
+      if (url.origin === "http://127.0.0.1:4173") destinations.add(`${url.pathname}${url.search}`);
+    }
+  }
+  for (const destination of destinations) {
+    expect((await page.request.get(destination)).ok(), destination).toBe(true);
+  }
+  await page.goto("http://127.0.0.1:1420/");
+  await page.getByRole("button", { name: "License options" }).click();
+  await expect(page.getByRole("dialog", { name: "License options" }).getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "https://vault-cross-search.sociobot.in/privacy/");
+  await expect(page.getByRole("dialog", { name: "License options" }).getByRole("link", { name: "Terms" })).toHaveAttribute("href", "https://vault-cross-search.sociobot.in/terms/");
 });
 
 test("site build includes explicit static-host headers and a real 404 response", async ({ page }) => {
@@ -363,5 +445,7 @@ test("site build includes explicit static-host headers and a real 404 response",
   expect(config.responseOverrides["404"]).toEqual({ rewrite: "/404.html", statusCode: 404 });
   const notFound = await page.request.get("/404.html");
   expect(notFound.status()).toBe(200);
-  expect(await notFound.text()).toContain("<h1>Page not found</h1>");
+  const notFoundHtml = await notFound.text();
+  expect(notFoundHtml).toContain('<h1 tabindex="-1">Page not found</h1>');
+  expect(notFoundHtml).not.toContain("No marker at this coordinate");
 });

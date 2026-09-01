@@ -6,9 +6,9 @@ Live download site: <https://vault-cross-search.sociobot.in>
 
 ## Try the demo
 
-Open <https://vault-cross-search.sociobot.in/demo/> or choose **Try it with sample data** on the first screen. It loads six bundled records across Personal.kdbx, Work.kdbx, and Archive.kdbx; try searching acme, river, or operations.
+Open <https://vault-cross-search.sociobot.in/?demo=1> or choose **Try it with sample data** on the first screen. It loads six bundled records across Personal.kdbx, Work.kdbx, and Archive.kdbx; try searching acme, river, or operations.
 
-The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Reset demo** restores the bundled records. **Start for real** discards the demo key and returns to the download page. The demo never reads a vault file or makes a product API request.
+The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Reset demo** restores the bundled records. **Start for real** discards the demo key and returns to the download page. The demo uses no file picker or desktop bridge, and every demo request stays on the product origin.
 
 ## What it does
 
@@ -19,7 +19,7 @@ The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Rese
 - Zeroes the metadata index on per-vault lock, lock-all, quit, or 15 minutes of inactivity.
 - Ships with no telemetry, cloud account, autofill, sync, or clipboard writes.
 
-The free edition supports two simultaneous vaults. A $19 one-time license enables unlimited vaults through the Sociobot billing API. There is no subscription. Safety and accessibility behavior is identical in both editions.
+The free plan supports two simultaneous vaults. The planned unlimited-vault license is $19 once, with no subscription. Purchases remain unavailable until checkout registration is complete. Existing tokens can still be restored. Safety and accessibility behavior is identical in both plans.
 
 ## Develop
 
@@ -37,7 +37,7 @@ The factory static deployment command is exactly `npm run build:site`; its outpu
 
 ## Install and release
 
-The landing page detects macOS, Windows, or Linux and resolves its main button from the release `latest.json` manifest. Releases contain unsigned `.dmg`, `.msi`/`.exe`, `.AppImage`, and `.deb` bundles plus `SHA256SUMS`.
+The landing page detects macOS, Windows, or Linux and resolves its main button from the release `latest.json` manifest. Installer publisher signing is not configured. Releases contain `.dmg`, `.msi`/`.exe`, `.AppImage`, and `.deb` bundles plus `SHA256SUMS`.
 
 Release asset names are normalized before upload, so the downloaded names and `SHA256SUMS` agree. After downloading an installer and `SHA256SUMS` into the same directory, verify them with `sha256sum -c SHA256SUMS`.
 
@@ -49,18 +49,18 @@ curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
 irm https://vault-cross-search.sociobot.in/install.ps1 | iex
 ```
 
-To publish the repaired v0.1.3 release after verification:
+To publish the repaired v0.1.4 release after verification:
 
 ```sh
-git tag v0.1.3
-git push origin main v0.1.3
+git tag v0.1.4
+git push origin main v0.1.4
 ```
 
 The tag triggers [the release workflow](.github/workflows/release.yml). Platform runners create installers; the publish job generates checksums and `latest.json` before attaching everything to one GitHub Release.
 
 ## Security model
 
-The Rust core receives the unlock credential and clears its owned password buffer immediately after key derivation. The decrypted database object is dropped after metadata extraction. The webview receives only the allowed metadata fields and opaque local identifiers. Search data is wrapped in zeroizing buffers and never written to application storage or logs.
+The Rust core receives the unlock credential and clears its owned password buffer immediately after key derivation. The decrypted database object is dropped after metadata extraction. The webview receives only the allowed metadata fields and opaque local identifiers. The metadata index stays in the in-memory Rust session and has no application-storage path.
 
 This initial version is not yet independently audited. It opens the owning database because KeePassXC does not expose a documented cross-platform interface for selecting an exact GUI entry. The matching title and group remain visible in Vault Cross Search so the user can finish navigation without copying secrets.
 

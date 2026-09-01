@@ -18,7 +18,7 @@ try {
     Start-Process $installer -Wait
   }
   Write-Host "Installed Vault Cross Search from a verified release asset."
-  Write-Host "This early build is unsigned, so Windows may show SmartScreen."
+  Write-Host "Publisher signing is not configured, so Windows may show SmartScreen."
 } finally {
   Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue
 }

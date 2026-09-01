@@ -14,12 +14,12 @@ test("@claim:verified-installers verifies release checksums before installing", 
     const releaseDir = join(root, "release-assets");
     mkdirSync(releaseDir);
     const releaseFiles = [
-      "macos-arm64-Vault Cross Search_0.1.3_aarch64.dmg",
-      "macos-x64-Vault Cross Search_0.1.3_x64.dmg",
-      "windows-x64-Vault Cross Search_0.1.3_x64_en-US.msi",
-      "windows-x64-Vault Cross Search_0.1.3_x64-setup.exe",
-      "linux-x64-Vault Cross Search_0.1.3_amd64.AppImage",
-      "linux-x64-Vault Cross Search_0.1.3_amd64.deb"
+      "macos-arm64-Vault Cross Search_0.1.4_aarch64.dmg",
+      "macos-x64-Vault Cross Search_0.1.4_x64.dmg",
+      "windows-x64-Vault Cross Search_0.1.4_x64_en-US.msi",
+      "windows-x64-Vault Cross Search_0.1.4_x64-setup.exe",
+      "linux-x64-Vault Cross Search_0.1.4_amd64.AppImage",
+      "linux-x64-Vault Cross Search_0.1.4_amd64.deb"
     ];
     for (const name of releaseFiles) writeFileSync(join(releaseDir, name), `fixture:${name}`);
     const normalizeRun = spawnSync(process.execPath, ["scripts/normalize-release-asset-names.mjs", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
@@ -30,22 +30,22 @@ test("@claim:verified-installers verifies release checksums before installing", 
     expect(checksumCheck.status, checksumCheck.stderr).toBe(0);
     expect(checksumCheck.stdout.match(/: OK$/gm)).toHaveLength(6);
     expect(readFileSync(join(releaseDir, "SHA256SUMS"), "utf8")).not.toContain("Vault Cross Search");
-    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.3", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
+    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.4", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
     expect(manifestRun.status, manifestRun.stderr).toBe(0);
     const manifest = JSON.parse(readFileSync(join(releaseDir, "latest.json"), "utf8")) as { version: string; platforms: Record<string, { name: string; url: string; sha256: string }> };
-    expect(manifest.version).toBe("v0.1.3");
+    expect(manifest.version).toBe("v0.1.4");
     expect(Object.keys(manifest.platforms).sort()).toEqual(["linux-deb", "linux-x64", "macos-arm64", "macos-x64", "windows-x64"]);
     for (const asset of Object.values(manifest.platforms)) {
       expect(asset.sha256).toBe(sha256(readFileSync(join(releaseDir, asset.name))));
-      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.3/");
+      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.4/");
     }
 
     const fixtureDir = join(root, "fixture");
     const fakeBin = join(root, "fake-bin");
-    const home = join(root, "home");
+    const installDir = join(root, "install-bin");
     mkdirSync(fixtureDir);
     mkdirSync(fakeBin);
-    mkdirSync(home);
+    mkdirSync(installDir);
     const appImage = Buffer.from("verified appimage fixture");
     writeFileSync(join(fixtureDir, "app.AppImage"), appImage);
     writeFileSync(join(fixtureDir, "latest.json"), JSON.stringify({ platforms: { "linux-x64": { url: "https://example.invalid/linux-x64-Vault.AppImage", sha256: sha256(appImage) } } }));
@@ -53,10 +53,10 @@ test("@claim:verified-installers verifies release checksums before installing", 
     writeFileSync(join(fakeBin, "curl"), "#!/bin/sh\nout=\"\"\nwhile [ \"$#\" -gt 0 ]; do\n  if [ \"$1\" = \"-o\" ]; then shift; out=\"$1\"; fi\n  shift\ndone\ncase \"$out\" in\n  *latest.json) cp \"$VCS_FIXTURE_DIR/latest.json\" \"$out\" ;;\n  *) cp \"$VCS_FIXTURE_DIR/app.AppImage\" \"$out\" ;;\nesac\n");
     chmodSync(join(fakeBin, "uname"), 0o755);
     chmodSync(join(fakeBin, "curl"), 0o755);
-    const env = { ...process.env, HOME: home, VCS_FIXTURE_DIR: fixtureDir, PATH: `${fakeBin}:/usr/bin:/bin` };
+    const env = { ...process.env, VCS_INSTALL_DIR: installDir, VCS_FIXTURE_DIR: fixtureDir, PATH: `${fakeBin}:/usr/bin:/bin` };
     const installRun = spawnSync("sh", ["site/public/install.sh"], { cwd: process.cwd(), env, encoding: "utf8" });
     expect(installRun.status, installRun.stderr).toBe(0);
-    const installed = join(home, ".local/bin/vault-cross-search.AppImage");
+    const installed = join(installDir, "vault-cross-search.AppImage");
     expect(readFileSync(installed)).toEqual(appImage);
     expect(installRun.stdout).toContain("Installed verified AppImage");
 
@@ -77,4 +77,15 @@ test("@claim:verified-installers verifies release checksums before installing", 
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("@claim:installer-signing-status shows that publisher signing is not configured", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "repository release check runs once");
+  await page.goto("/");
+  await expect(page.getByText("Installer publisher signing is not configured.", { exact: false })).toBeVisible();
+  const workflow = readFileSync(".github/workflows/release.yml", "utf8");
+  expect(workflow).not.toMatch(/APPLE_CERTIFICATE|APPLE_SIGNING_IDENTITY|WINDOWS_CERT_PFX|TAURI_SIGNING_PRIVATE_KEY/);
+  expect(readFileSync("README.md", "utf8")).toContain("Installer publisher signing is not configured.");
+  expect(readFileSync("site/public/install.sh", "utf8")).toContain("Publisher signing is not configured");
+  expect(readFileSync("site/public/install.ps1", "utf8")).toContain("Publisher signing is not configured");
 });

@@ -57,9 +57,9 @@ function renderDemo() {
   root.innerHTML = `
     <header class="site-header demo-header"><a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span>Vault Cross Search</a><nav aria-label="Primary"><a href="/">Home</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav></header>
     <aside class="demo-banner" aria-label="Demo controls"><strong>Demo — sample data, nothing is saved to your real vaults</strong><span><button type="button" id="reset-demo">Reset demo</button><a href="/" id="start-real">Start for real</a></span></aside>
-    <main id="main" class="demo-workspace" tabindex="-1"><section class="demo-rail" aria-labelledby="sample-vaults"><p class="eyebrow">Sample vaults</p><h2 id="sample-vaults">Three separate vaults</h2><ul>${["Personal.kdbx", "Work.kdbx", "Archive.kdbx"].map((vault) => `<li><span class="vault-glyph" aria-hidden="true">${vault[0]}</span><span><strong>${vault}</strong><small>${entries.filter((entry) => entry.vault === vault).length} sample entries · unlocked</small></span></li>`).join("")}</ul><p>These records are bundled examples. They never open a local file.</p></section>
-      <section class="demo-search" aria-labelledby="demo-heading"><p class="eyebrow">Sample search</p><h1 id="demo-heading">Find an entry across separate vaults</h1><p>Type a title, username, URL, or group. The sample shows which vault owns each result.</p><label class="sr-only" for="demo-search">Search sample vault metadata</label><div class="demo-input"><span aria-hidden="true">⌕</span><input id="demo-search" type="search" autocomplete="off" placeholder="Try “acme”, “river”, or “operations”"><kbd>Ctrl K</kbd></div><p id="demo-status" class="demo-status" aria-live="polite"></p><ol id="demo-results" class="demo-results" aria-label="Sample search results"></ol></section></main>
-    <footer><a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span>Vault Cross Search</a><p>Bundled sample metadata is isolated in this browser only.<br><span class="build-id">Built by Param Factory · Build v0.1.3</span></p><nav aria-label="Legal"><a href="/demo/" aria-current="page">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav></footer>`;
+    <main id="main" class="demo-workspace" tabindex="-1"><section class="demo-rail" aria-labelledby="sample-vaults"><p class="eyebrow">Sample vaults</p><h2 id="sample-vaults">Three separate vaults</h2><ul>${["Personal.kdbx", "Work.kdbx", "Archive.kdbx"].map((vault) => `<li><span class="vault-glyph" aria-hidden="true">${vault[0]}</span><span><strong>${vault}</strong><small>${entries.filter((entry) => entry.vault === vault).length} sample entries · unlocked</small></span></li>`).join("")}</ul><p>These bundled records use no file picker or desktop connection.</p></section>
+      <section class="demo-search" aria-labelledby="demo-heading"><p class="eyebrow">Sample search</p><h1 id="demo-heading" tabindex="-1">Find an entry across separate vaults</h1><p>Search the bundled metadata. Each result names its owning vault.</p><label class="sr-only" for="demo-search">Search sample vault metadata</label><div class="demo-input"><span aria-hidden="true">⌕</span><input id="demo-search" type="search" autocomplete="off" value="acme" placeholder="Try “acme”, “river”, or “operations”"><kbd>Ctrl K</kbd></div><p id="demo-status" class="demo-status" aria-live="polite"></p><ol id="demo-results" class="demo-results" aria-label="Sample search results"></ol></section></main>
+    <footer><a class="wordmark" href="/"><span class="mark" aria-hidden="true"></span>Vault Cross Search</a><p>Bundled sample metadata is isolated in this browser only.<br><span class="build-id">Built by Param Factory · Build v0.1.4</span></p><nav aria-label="Legal"><a href="/?demo=1" aria-current="page">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav></footer>`;
   const input = document.querySelector<HTMLInputElement>("#demo-search")!;
   const results = document.querySelector<HTMLOListElement>("#demo-results")!;
   const status = document.querySelector<HTMLParagraphElement>("#demo-status")!;
@@ -74,6 +74,20 @@ function renderDemo() {
   document.querySelector<HTMLButtonElement>("#reset-demo")!.addEventListener("click", () => { localStorage.removeItem(demoKey); entries = loadDemo(); input.value = ""; show(); input.focus(); });
   document.querySelector<HTMLAnchorElement>("#start-real")!.addEventListener("click", () => localStorage.removeItem(demoKey));
   show();
+  document.dispatchEvent(new CustomEvent("vault-route-ready"));
+}
+
+const queryDemo = new URLSearchParams(location.search).get("demo") === "1";
+if (queryDemo && document.body.dataset.page !== "demo") {
+  document.title = "Demo — Vault Cross Search";
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", "Try Vault Cross Search with three isolated sample KeePass vaults.");
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", "https://vault-cross-search.sociobot.in/demo/");
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute("content", "Demo — Vault Cross Search");
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute("content", "Search three isolated sample vaults.");
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute("content", "Demo — Vault Cross Search");
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute("content", "Search three isolated sample vaults.");
+  document.body.dataset.page = "demo";
+  document.body.innerHTML = '<a class="skip-link" href="#main">Skip to demo</a><div id="demo-root"></div>';
 }
 
 if (document.body.dataset.page === "demo") renderDemo();
