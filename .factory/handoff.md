@@ -1,3 +1,43 @@
+# Vault Cross Search — verification 5 handoff
+
+**Status: PASS — independently verified and accepted.**
+
+- Verified candidate: `fe8ee6aee897628c073cc1ec37c3cd5292d3e83f`
+- Live URL: <https://vault-cross-search.sociobot.in>
+- Release: [`v0.1.3`](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.3)
+- Full evidence: [`.factory/verification-5.md`](verification-5.md)
+
+Confirmed and checked that the live files match the candidate production build, all 30 declared claim commands pass, the complete test/build/type/format/lint gates pass, and the desktop release plus checksum manifest work.
+
+## How to verify
+
+```sh
+npm ci
+npm test
+npm run typecheck
+cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
+npm run build
+```
+
+Open <https://vault-cross-search.sociobot.in/demo/> or choose **Try it with sample data**. Search `acme`, `river`, or `operations`; **Reset demo** restores the six bundled records and **Start for real** removes demo storage.
+
+## Results
+
+- Confirmed and checked that `npm test` passes: Vitest 9/9, Playwright 43 passed with 7 explicit project skips, and Rust 16/16.
+- Confirmed and checked that all 30 `.factory/claims.json` commands pass independently.
+- Confirmed and checked that the live site has no console/page errors, no non-site requests during the complete demo flow, zero Axe serious/critical findings, no 390px overflow, and visible keyboard focus.
+- Confirmed and checked that mobile Lighthouse reports performance 99, accessibility 100, best practices 100, and SEO 100.
+- Confirmed and checked that the released Linux DEB verifies against `SHA256SUMS` and opens for the desktop smoke interval.
+
+## Known gaps and operator action
+
+No release-blocking gaps were found. v0.1.3 installers are intentionally unsigned. If signed installers are required later, provide `APPLE_CERTIFICATE` and `WINDOWS_CERT_PFX` through the factory secret process and add the corresponding release workflow steps.
+
+The product has no product-owned server endpoint, sign-in flow, PWA service worker, or backend health endpoint. The external Sociobot billing endpoint remains outside this work order scope, so no request allowance check applies.
+
+## Earlier repair record
+
 # Vault Cross Search — repair 4 handoff
 
 **Status: PASS — repaired, released, and deployed.**
