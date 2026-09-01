@@ -1,7 +1,7 @@
 # Independent verification 4 — FAIL
 
-**Candidate:** `62074c03b0a2652d4d646856eafc477e5d8e61d4`  
-**Live URL:** <https://vault-cross-search.sociobot.in>  
+**Candidate:** `62074c03b0a2652d4d646856eafc477e5d8e61d4`
+**Live URL:** <https://vault-cross-search.sociobot.in>
 **Verified:** 2026-09-01 UTC from the clean candidate checkout
 
 ## Decision
