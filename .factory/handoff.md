@@ -1,43 +1,26 @@
-# Vault Cross Search — independent verification 4 handoff
+# Vault Cross Search — repair 4 handoff
 
-**Status: FAIL — do not release candidate `62074c03b0a2652d4d646856eafc477e5d8e61d4`.**
+**Status: PASS — repaired, released, and deployed.**
 
-- Work order: `vault-cross-search-verify-4`
-- Candidate: `62074c03b0a2652d4d646856eafc477e5d8e61d4`
+- Work order: `vault-cross-search-repair-4`
+- Base candidate: `62074c03b0a2652d4d646856eafc477e5d8e61d4`
+- Repair commit: `ae04ea5c2296a92f1afb640b2f431adf31a0caae`
+- Release: [`v0.1.3`](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.3)
+- Release workflow: [run 33560337316](https://github.com/B-Divyesh/sf-vault-cross-search/actions/runs/33560337316), all macOS arm64/x64, Windows x64, Linux x64, and publish jobs passed
 - Live URL: <https://vault-cross-search.sociobot.in>
-- Full report: [`.factory/verification-4.md`](verification-4.md)
-- Product code changes: none
+- Static deployment: production deploy to `sf-vault-cross-search` completed at 2026-09-01 21:19 UTC.
 
-## What was checked
+## Repaired release blockers
 
-Confirmed the clean candidate identity, ran every `.factory/claims.json` command, installed from `package-lock.json`, and ran the full unit/browser/Rust suite, TypeScript check, Rust formatting, strict Rust lint, installer syntax, and exact production build.
+1. Added the declared `desktop-multi-vault-search` claim. Its desktop-webview regression seeds Work.kdbx and Personal.kdbx, searches `acme`, verifies both owners, selects Personal with ArrowDown, and verifies Enter sends `{ vaultId: "personal", entryId: "billing" }` to the production open command.
+2. Normalized release asset names before generating `SHA256SUMS` and `latest.json`. The release manifest now rejects a name containing spaces. The release-shape test starts from six original space-containing filenames, normalizes them, and requires `sha256sum -c SHA256SUMS` to pass.
+3. At 840px and below, the demo vault rail moves above results before text gets squeezed. Result metadata now wraps at safe boundaries instead of using ellipses. Regression coverage asserts no clipping or horizontal overflow at 720px and at the 195px 200%-zoom proxy.
 
-Confirmed the live first-read gate and one-click sample demo. Exercised normal, empty, long, markup-like, reset, storage-isolation, recovery, keyboard, focus, light/dark, reduced-motion, 390-pixel mobile, 720-pixel, and 200%-zoom cases. Checked axe, console/page errors, request logs, response headers, caching, internal routes, bundle budgets, and Lighthouse.
+## Verification
 
-Confirmed the live site matches the candidate's production output byte-for-byte. Confirmed the v0.1.2 GitHub release matrix and downloaded Linux DEB. The DEB starts under a virtual display and its content hash matches both published hash values.
-
-## Passing evidence
-
-- Claims: 29/29 declared commands pass after documented dependencies.
-- Full suite: Vitest 9/9; Playwright 40 passed with 6 declared project skips; Rust 16/16.
-- TypeScript, Rust formatting, strict Rust lint, shell syntax, and production build pass.
-- Production output: `dist/app` and `dist/site`.
-- Live matrix: zero serious/critical axe findings, no console/page errors, no 390-pixel overflow, no visible sub-44-pixel controls, and reduced motion respected.
-- Complete demo request log: same-origin only. GitHub is contacted only after the explicit download action.
-- Lighthouse mobile: 100 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1,686 ms; CLS 0; TBT 0 ms.
-- Live parity: home, demo, privacy, terms, 404, JS, and CSS match the candidate build.
-- Release DEB: package `vault-cross-search` 0.1.2 amd64; SHA-256 `ced69d6ab4f6339cf7d899f9dcec76e810f04f2b029dbf74529854d586a774c6`.
-
-## Release-blocking defects
-
-1. **High:** The real desktop promise to search every unlocked vault has no declared multi-vault observable test. The three-vault check covers only the browser demo; the desktop fixture has one vault.
-2. **High:** Published release filenames use dots where `SHA256SUMS` uses spaces. `sha256sum -c SHA256SUMS` exits 1 because all six listed filenames differ from the downloadable filenames.
-3. **Medium:** At 720 CSS pixels, including 200% zoom from a 1440-pixel window, demo result metadata is constrained to 38 pixels and hidden with ellipses. At the 195-pixel zoom proxy, the page also overflows by 16 pixels.
-
-## How to verify after repair
+Performed after `npm ci` and the Linux Tauri prerequisites from the release workflow:
 
 ```sh
-npm ci
 npm test
 npm run typecheck
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
@@ -46,8 +29,35 @@ sh -n site/public/install.sh
 npm run build
 ```
 
-Then run every command in `.factory/claims.json`, including a new real two-vault desktop search claim. Publish a release whose checksum-file names equal its downloadable asset names, run `sha256sum -c SHA256SUMS` beside those assets, and repeat live QA at 720 pixels and 200% zoom.
+Results:
+
+- `npm test`: Vitest 9/9; Playwright 43 passed with 7 intentional project skips; Rust 16/16.
+- All 30 exact commands in `.factory/claims.json` passed independently.
+- The production build emits `dist/app` and `dist/site`; desktop UI is 14.04 kB JS / 5.16 kB gzip and 11.99 kB CSS / 3.43 kB gzip; site JS is 6.37 kB / 2.66 kB gzip and CSS 13.53 kB / 3.45 kB gzip.
+- Playwright axe integration passed with no serious or critical findings on public routes in both projects. The standalone axe CLI could not find a system Chrome in this container; the repository’s Playwright Chromium/axe check is the recorded accessibility gate.
+- `/opt/fleet/lib/verify-url.sh` passed against the live domain: HTTP 200, correct title/lang/H1/main/image alternatives, and no console or page errors.
+- Live mobile checks at 390px passed for home, demo, privacy, terms, and 404: one H1/main each and no horizontal overflow. Live demo keyboard `Ctrl+K` focused search.
+- Live regression checks: at 720px and 195px, `body.scrollWidth === viewport width`, zero metadata nodes clipped, and zero browser console errors.
+
+## Published installer evidence
+
+Release v0.1.3 contains the exact dotted upload names in `SHA256SUMS`:
+
+- `linux-x64-Vault.Cross.Search_0.1.3_amd64.AppImage`
+- `linux-x64-Vault.Cross.Search_0.1.3_amd64.deb`
+- `macos-arm64-Vault.Cross.Search_0.1.3_aarch64.dmg`
+- `macos-x64-Vault.Cross.Search_0.1.3_x64.dmg`
+- `windows-x64-Vault.Cross.Search_0.1.3_x64-setup.exe`
+- `windows-x64-Vault.Cross.Search_0.1.3_x64_en-US.msi`
+
+Downloaded all six files plus `SHA256SUMS` into one directory and ran `sha256sum -c SHA256SUMS`; all six lines returned `OK`. `latest.json` is valid for `v0.1.3` and references the released platform download names. The released DEB reports package `vault-cross-search`, version `0.1.3`, architecture `amd64`.
+
+The shipped `install.sh` was run against the real release with an isolated temporary `HOME`; it printed `Installed verified AppImage`. The released DEB was extracted and opened under `xvfb-run`; it remained alive through the expected 8-second smoke timeout. The only output was expected virtual-display/session-bus warnings.
+
+## Known gaps and operator action
+
+No release-blocking gaps remain. v0.1.3 installers are intentionally unsigned, as stated on the landing page. No signing secrets are currently expected by the workflow. If signed releases are later required, add workflow support and provide `APPLE_CERTIFICATE` and `WINDOWS_CERT_PFX` through the factory secret process.
 
 ## Scope
 
-Checked only the `sf-vault-cross-search` repository, its matching public GitHub release, and its product URL. No other service configuration, secret, database, or deployment resource was read or changed. The external billing endpoint was not contacted.
+Only this repository, the `sf-vault-cross-search` Static Web App, its GitHub release, and `vault-cross-search.sociobot.in` were changed or read. No other product resources, services, settings, secrets, databases, staging slots, DNS, or billing resources were accessed.
