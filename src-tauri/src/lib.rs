@@ -99,6 +99,20 @@ fn database_key_from_password(password: &mut String) -> DatabaseKey {
     key
 }
 
+fn database_key_from_credentials(
+    password: &mut String,
+    key_file: Option<&Path>,
+) -> Result<DatabaseKey, String> {
+    let key = database_key_from_password(password);
+    if let Some(key_path) = key_file {
+        let mut file = File::open(key_path).map_err(|_| "The key file could not be read.")?;
+        key.with_keyfile(&mut file)
+            .map_err(|_| "The key file is not valid.".to_string())
+    } else {
+        Ok(key)
+    }
+}
+
 fn collect_entries(
     group: &Group,
     vault_id: &str,
@@ -149,18 +163,7 @@ fn unlock_vault(
         password.zeroize();
         return Err("Choose a KeePass .kdbx vault.".into());
     }
-    let key = database_key_from_password(&mut password);
-    let key_result = if let Some(ref key_path) = key_file {
-        File::open(key_path)
-            .map_err(|_| "The key file could not be read.")
-            .and_then(|mut file| {
-                key.with_keyfile(&mut file)
-                    .map_err(|_| "The key file is not valid.")
-            })
-    } else {
-        Ok(key)
-    };
-    let key = key_result?;
+    let key = database_key_from_credentials(&mut password, key_file.as_deref().map(Path::new))?;
     let mut file = File::open(&vault_path)
         .map_err(|_| "The vault could not be read. Check its location and permissions.")?;
     let db = Database::open(&mut file, key)
@@ -335,6 +338,8 @@ mod tests {
     use super::*;
     use keepass::db::{Entry, Group, Value};
     use secstr::SecStr;
+    use std::io::{Cursor, Write};
+    use tempfile::NamedTempFile;
     #[test]
     fn empty_session_is_locked() {
         let session = Session::default();
@@ -502,6 +507,55 @@ mod tests {
         assert_eq!(index[0].group, "Work");
         assert_eq!(index[0].title, "Incident portal");
         assert_eq!(index[0].username, "on-call");
+    }
+    #[test]
+    fn claim_optional_key_file_unlock_and_invalid_key_recovery() {
+        let valid_key_bytes = b"vault-cross-search-fixture-key";
+        let invalid_key_bytes = b"wrong-fixture-key";
+        let mut valid_key_file = NamedTempFile::new().unwrap();
+        valid_key_file.write_all(valid_key_bytes).unwrap();
+        let mut invalid_key_file = NamedTempFile::new().unwrap();
+        invalid_key_file.write_all(invalid_key_bytes).unwrap();
+
+        let mut db = Database::new(Default::default());
+        let mut entry = Entry::new();
+        entry.fields.insert(
+            "Title".into(),
+            Value::Unprotected("Key-file protected marker".into()),
+        );
+        db.root.entries.push(entry);
+        let save_key = DatabaseKey::new()
+            .with_password("fixture password")
+            .with_keyfile(&mut Cursor::new(valid_key_bytes))
+            .unwrap();
+        let mut bytes = Vec::new();
+        db.save(&mut bytes, save_key).unwrap();
+
+        let mut wrong_password = String::from("fixture password");
+        let wrong_key =
+            database_key_from_credentials(&mut wrong_password, Some(invalid_key_file.path()))
+                .unwrap();
+        assert!(wrong_password.is_empty());
+        assert!(Database::open(&mut Cursor::new(bytes.clone()), wrong_key).is_err());
+
+        let mut password = String::from("fixture password");
+        let valid_key =
+            database_key_from_credentials(&mut password, Some(valid_key_file.path())).unwrap();
+        assert!(password.is_empty());
+        let reopened = Database::open(&mut Cursor::new(bytes), valid_key).unwrap();
+        let index = index_database(reopened, "vault", "Keyed");
+        assert_eq!(index[0].title, "Key-file protected marker");
+
+        let mut missing_password = String::from("fixture password");
+        assert_eq!(
+            database_key_from_credentials(
+                &mut missing_password,
+                Some(Path::new("missing-key-file.fixture"))
+            )
+            .unwrap_err(),
+            "The key file could not be read."
+        );
+        assert!(missing_password.is_empty());
     }
     #[test]
     fn invalid_unlock_does_not_prevent_valid_recovery() {

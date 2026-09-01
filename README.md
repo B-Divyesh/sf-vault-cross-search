@@ -19,7 +19,7 @@ The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Rese
 - Zeroes the metadata index on per-vault lock, lock-all, quit, or 15 minutes of inactivity.
 - Ships with no telemetry, cloud account, autofill, sync, or clipboard writes.
 
-The free edition supports two simultaneous vaults. A one-time license unlocks unlimited vaults through the Sociobot billing API. Safety and accessibility behavior is identical in both editions.
+The free edition supports two simultaneous vaults. A $19 one-time license enables unlimited vaults through the Sociobot billing API. There is no subscription. Safety and accessibility behavior is identical in both editions.
 
 ## Develop
 
@@ -47,11 +47,11 @@ curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
 irm https://vault-cross-search.sociobot.in/install.ps1 | iex
 ```
 
-To publish the repaired v0.1.1 release after verification:
+To publish the repaired v0.1.2 release after verification:
 
 ```sh
-git tag v0.1.1
-git push origin main v0.1.1
+git tag v0.1.2
+git push origin main v0.1.2
 ```
 
 The tag triggers [the release workflow](.github/workflows/release.yml). Platform runners create installers; the publish job generates checksums and `latest.json` before attaching everything to one GitHub Release.

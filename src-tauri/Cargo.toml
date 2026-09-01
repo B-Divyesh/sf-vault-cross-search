@@ -1,6 +1,6 @@
 [package]
 name = "vault-cross-search"
-version = "0.1.1"
+version = "0.1.2"
 description = "Session-only metadata search across local KeePass vaults"
 authors = ["Param Factory"]
 license = "MIT"
@@ -27,6 +27,7 @@ open = "5.3"
 [dev-dependencies]
 keepass = { version = "0.8", features = ["save_kdbx4"] }
 secstr = "0.5"
+tempfile = "3"
 
 [profile.release]
 panic = "abort"

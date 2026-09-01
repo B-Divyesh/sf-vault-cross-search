@@ -12,3 +12,8 @@ dialog{border:1px solid var(--line);border-radius:18px;background:var(--surface)
 @media(max-width:720px){.app-header{padding:0 12px}.brand span:last-child,.session-pill,.lock-button span{display:none}.workspace{display:block}.vault-rail{border-right:0;border-bottom:1px solid var(--line);padding:16px}.vault-list{display:flex;overflow-x:auto;margin:12px 0}.vault-item{min-width:220px}.rail-empty{align-items:flex-start;padding:8px}.empty-rings{display:none}.privacy-note,.license-row{display:none}.search-panel{padding:32px 16px 80px}.search-panel:before{opacity:.1}h1{font-size:38px;margin-bottom:24px}.search-box{height:58px}.search-box kbd{display:none}.map-empty,.ready-state{align-items:flex-start;text-align:left;padding:24px 4px}.map-art{align-self:center}.result-row{grid-template-columns:20px minmax(0,1fr) 22px}.result-vault{grid-column:2;text-align:left}.result-open{grid-column:3;grid-row:1/3}.shortcut-grid{flex-wrap:wrap;gap:12px}dialog form{padding:26px 20px}.key-row{flex-direction:column}.key-row button{height:44px}}
 @media(prefers-reduced-motion:no-preference){.result-row,.skip-link{transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}dialog[open]{animation:dialog-in .2s ease-out}@keyframes dialog-in{from{opacity:0;transform:translateY(8px) scale(.98)}}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Release QA touch-target baseline. */
+.brand{min-height:44px}
+.search-box input{min-height:44px}
+.legal-small a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}

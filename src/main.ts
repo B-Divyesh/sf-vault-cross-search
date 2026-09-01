@@ -29,7 +29,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <button class="lock-button" id="lock-button" type="button" disabled><span aria-hidden="true">⌘L</span> Lock all</button>
     </div>
   </header>
-  <main id="main" class="workspace">
+  <main id="main" class="workspace" tabindex="-1">
     <aside class="vault-rail" aria-labelledby="vault-heading">
       <div class="section-heading"><div><p class="eyebrow">Local territories</p><h2 id="vault-heading">Vaults</h2></div><button id="add-vault" class="add-button" type="button"><span aria-hidden="true">＋</span> Add</button></div>
       <ul id="vault-list" class="vault-list"></ul>
@@ -65,7 +65,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <form id="license-form" method="dialog">
       <button class="dialog-close" value="cancel" aria-label="Close license dialog" type="submit">×</button>
       <p class="eyebrow">$19 one-time field license</p><h2 id="license-title">Search without borders</h2>
-      <p class="dialog-copy">The free app searches two vaults. A $19 one-time license unlocks unlimited vaults and supports independent security review. No subscription.</p>
+      <p class="dialog-copy">The free app searches two vaults. A $19 one-time license enables unlimited vaults. No subscription.</p>
       <a id="buy-license" class="primary-button link-button" href="https://api.sociobot.in/api/v1/products/vault-cross-search/checkout" target="_blank" rel="noreferrer">Buy a license</a>
       <div class="rule"><span>or restore</span></div>
       <label for="license-token">License token</label><input id="license-token" type="text" autocomplete="off" spellcheck="false" />

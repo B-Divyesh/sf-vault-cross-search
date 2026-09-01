@@ -1,4 +1,4 @@
-# Copy audit — 2026-08-30 repair
+# Copy audit — 2026-09-01 repair 3
 
 All landing-page sentences, headings, labels, facts, and actions were read aloud and counted. The first screen states the job, audience, first action, and three facts in one breath.
 
@@ -53,8 +53,10 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 | Useful free. | 2 | Pass |
 | Unlimited once. | 2 | Pass |
 | Search up to two vaults, with every privacy and accessibility feature included. | 12 | Pass |
-| Unlimited vaults and funding for independent security review. | 8 | Pass |
-| No subscription, account, or tracking. | 5 | Pass |
+| One-time purchase | 2 | Pass |
+| $19 once | 2 | Pass |
+| Unlimited vaults on this device. | 5 | Pass |
+| No subscription. | 2 | Pass |
 | Sociobot/Dodo is merchant of record. | 5 | Pass |
 | Refunds are handled there. | 4 | Pass |
 | One-line install | 2 | Pass |
@@ -63,6 +65,8 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 | Checksums are published with every release. | 6 | Pass |
 | Local software for deliberately separate vaults. | 6 | Pass |
 | Hero artwork generated for this product; no stock assets. | 9 | Pass |
+| Built by Param Factory | 4 | Pass |
+| Build v0.1.2 | 2 | Pass |
 
 No sentence exceeds 22 words. No banned marketing word appears; “Unlock” names the literal vault action.
 

@@ -4368,7 +4368,7 @@ dependencies = [
 
 [[package]]
 name = "vault-cross-search"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "keepass",
  "open",
@@ -4379,6 +4379,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tempfile",
  "uuid",
  "zeroize",
 ]

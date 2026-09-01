@@ -25,7 +25,7 @@
     "claim": "The complete sample-demo flow sends no third-party requests.",
     "where": "Demo banner and privacy policy",
     "test": "npx playwright test --grep @claim:demo-privacy",
-    "sandbox": "Fresh browser context at /demo/; record all requests during search and reset; allow only the local site origin."
+    "sandbox": "Fresh browser context at /demo/; record all requests during search, reset, and Start for real; allow only the local site origin."
   },
   {
     "id": "download-on-demand",
@@ -54,6 +54,13 @@
     "where": "README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml kdbx_round_trip_can_be_unlocked_and_indexed",
     "sandbox": "Generate a KDBX 4 database in memory, save it with a fixture password, reopen it, and assert its title, username, and group metadata."
+  },
+  {
+    "id": "optional-key-files",
+    "claim": "The desktop core unlocks KDBX 4 databases with an optional key file and recovers after a wrong or missing key file.",
+    "where": "README and desktop unlock dialog",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_optional_key_file_unlock_and_invalid_key_recovery",
+    "sandbox": "Generate a KDBX 4 database protected by a password and key-file fixture; reject a different key and a missing file; then unlock with the matching key and assert indexed metadata."
   },
   {
     "id": "credential-clear",
@@ -116,7 +123,14 @@
     "claim": "Normal desktop use makes no analytics, telemetry, advertising, crash-reporting, or background-sync request.",
     "where": "Landing page, privacy policy, README",
     "test": "npx playwright test --grep @claim:desktop-no-observation",
-    "sandbox": "Fresh desktop-webview page; record requests while loading, changing theme, and opening license controls; assert no request leaves the local app origin."
+    "sandbox": "Fresh fixture-backed desktop webview; record requests while loading, changing theme, opening and closing license controls, searching, moving through results, and opening one; assert no request leaves the local app origin."
+  },
+  {
+    "id": "desktop-keyboard-search",
+    "claim": "Ctrl or Command K focuses desktop search, arrow keys move through results, and Enter opens the selected result.",
+    "where": "README and desktop ready state",
+    "test": "npx playwright test --grep @claim:desktop-keyboard-search",
+    "sandbox": "Fixture-backed desktop webview with one unlocked vault and two results; use only keyboard commands and assert the second result's vault and entry identifiers reach the production open command."
   },
   {
     "id": "no-secret-actions",
@@ -173,5 +187,19 @@
     "where": "App license behavior",
     "test": "npx playwright test --grep @claim:offline-license-cache",
     "sandbox": "Start offline with a stale valid cached fixture, abort the verification request, and assert the app still shows Licensed · unlimited."
+  },
+  {
+    "id": "one-time-pricing",
+    "claim": "Unlimited vaults cost $19 once, with no subscription, through the Vault Cross Search Sociobot checkout.",
+    "where": "Landing pricing, desktop license dialog, terms, and README",
+    "test": "npx playwright test --grep @claim:one-time-pricing",
+    "sandbox": "Open the landing pricing section and desktop license dialog; assert the exact price, one-time and no-subscription terms, and product-specific checkout URL."
+  },
+  {
+    "id": "verified-installers",
+    "claim": "Release manifests publish a SHA-256 for every platform installer, and the one-line installers verify it before installing.",
+    "where": "Landing install section and README",
+    "test": "npx playwright test tests/installers.spec.ts --grep @claim:verified-installers --project=desktop",
+    "sandbox": "Generate a five-asset release manifest; assert every published checksum; run the Linux installer against matching and mismatched local fixtures; inspect the Windows verification-before-launch boundary and release upload workflow."
   }
 ]

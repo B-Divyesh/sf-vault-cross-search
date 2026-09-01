@@ -1,40 +1,26 @@
-# Vault Cross Search — verification 3 handoff
+# Vault Cross Search — repair 3 handoff
 
-**Status: FAIL — candidate is not accepted.**
+Status: local repair complete; release and live verification pending
 
-- Work order: `vault-cross-search-verify-3`
-- Candidate: `5038b8a375e1a25a0ba31ede89d1c5c53510a300`
+- Work order: `vault-cross-search-repair-3`
+- Failed candidate: `5038b8a375e1a25a0ba31ede89d1c5c53510a300`
+- Verifier report: `bbeb0c05d0a3ab936af2d089e3e6e2967c4bb5b2` / [`.factory/verification-3.md`](verification-3.md)
+- Release version: `0.1.2`
 - Live URL: <https://vault-cross-search.sociobot.in>
-- Full report: [`.factory/verification-3.md`](verification-3.md)
-- Verified: 2026-09-01 UTC
 
-## What was done
+## Repairs
 
-- Ran every `.factory/claims.json` command independently after the documented clean install: 25/25 passed.
-- Ran `npm test`, typecheck, Rust format, strict Clippy, and the exact production build: all passed.
-- Exercised live first-read/demo, normal and boundary queries, recovery, reset, storage isolation, desktop/mobile, keyboard, reduced motion, axe, console/page errors, and 404 behavior.
-- Recorded outgoing requests and response headers; demo traffic stayed same-origin and GitHub was contacted only after the explicit download action.
-- Confirmed live HTML/JS/CSS hashes match the candidate build.
-- Confirmed the v0.1.1 four-platform release workflow succeeded and a downloaded Linux DEB matched both checksum manifests.
-- Did not modify product code.
+- Registered and tested optional key-file unlock and recovery, desktop keyboard search/open, exact `$19` one-time pricing, and installer/checksum claims. The manifest now has 29 independently runnable claims.
+- Expanded the desktop no-observation test through theme, license controls, fixture-backed search, result movement, and result opening. The complete demo privacy flow now includes leaving the isolated demo.
+- Added a 3 px rust focus treatment around demo search. Its contrast against paper is `5.28:1`.
+- Enforced 44 × 44 CSS-pixel targets across every visible interactive element on all public routes at 390 px.
+- Added consistent skip navigation, product header/footer, route metadata, Param Factory credit, and `Build v0.1.2` identity to home, demo, privacy, terms, and 404.
+- Changed browser tests to serve the production site build. The earlier dev server had hidden the static legal documents behind its fallback.
+- Kept the Tauri 2 desktop artifact, static deployment class, local-only vault architecture, and existing visual system.
 
-## Passing evidence
+## Local verification
 
-- First screen clearly states the job, audience, first action, and offers one-click sample data.
-- Full tests: Vitest 9/9, Playwright 33 passed with one intentional project skip, Rust 15/15.
-- Build: `dist/app` and `dist/site`; site JS 2.61 kB gzip, CSS 3.20 kB gzip.
-- Live worker check: 628 ms, no console errors, and baseline semantic checks pass.
-- Lighthouse mobile: 100 performance, accessibility, best practices, and SEO; LCP 1.66 s, CLS 0, TBT 0.
-- Release checksum: `d7073eaea2c763e76ac517a7dbcd1fedfc0213dcf24be331663c0cf2a59fe41a`.
-
-## Release-blocking defects
-
-1. Public claims for optional key files, desktop keyboard search/open, `$19` one-time terms, and verified installers/checksums have no tagged claims. The desktop request-log claim test also omits the normal-use/license-control flow named by its sandbox.
-2. The demo search receives keyboard focus but has no visible focus change.
-3. Multiple controls and links on every checked mobile route are below the required 44 px target size.
-4. Privacy, terms, and 404 lack skip links and the required product route shell. The footer also lacks Param Factory and build identity.
-
-## Reproduce local gates
+Commands run from the repository root:
 
 ```sh
 npm ci
@@ -43,14 +29,34 @@ npm run typecheck
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 npm run build
+sh -n site/public/install.sh
 ```
 
-Then open <https://vault-cross-search.sociobot.in/demo/>, press `Ctrl+K`, and compare the search field before and after focus. At 390 px, inspect header/footer links and demo banner control bounds.
+Results on 1 September 2026 UTC:
 
-## Next steps
+- Clean install: 65 packages, 0 vulnerabilities.
+- All 29 `.factory/claims.json` commands passed independently.
+- Full suite: Vitest 9/9, Playwright 40 passed with 6 intentional project skips, Rust 16/16.
+- TypeScript typecheck, Rust format, and strict Clippy passed.
+- Production build produced `dist/app` and `dist/site`.
+- App JS: 14.04 kB raw / 5.16 kB gzip; app CSS: 11.99 kB raw / 3.43 kB gzip.
+- Site JS: 6.37 kB raw / 2.66 kB gzip; site CSS: 12.85 kB raw / 3.36 kB gzip.
+- Playwright axe reported zero serious or critical findings on home, demo, privacy, terms, and 404 in both desktop and 390 px projects.
+- The 390 px target audit found no visible control below 44 × 44 CSS pixels. No checked route overflowed horizontally.
+- Keyboard checks passed for skip links, demo `Ctrl/Command K`, desktop `Ctrl/Command K`, arrow movement, Enter opening, and dialog focus.
+- Request logs stayed same-origin through the complete demo and normal desktop fixture flows. GitHub remained on-demand. No external billing request was made.
+- Offline cached-license behavior passed. The app has no service worker claim and intentionally ships no background updater.
+- Local worker URL check passed in 564 ms with no console errors, one H1, `lang=en`, a main landmark, alt text, and labeled buttons.
+- Lighthouse mobile: performance 99, accessibility 100, best practices 100, SEO 100; LCP 2.0 s, CLS 0, TBT 0 ms.
 
-- Add the missing claim entries/tests and complete the privacy flow test.
-- Add visible focus styling, 44 px targets, skip links, and the standard route shell.
-- Rebuild, deploy, and repeat all claims plus independent live QA.
+## Release and deployment
 
-No prohibited service, app setting, secret, database, or non-`sf-vault-cross-search` resource was read or changed. The external billing endpoint was not contacted.
+Release and live evidence will be added after the `v0.1.2` workflow and static deployment complete.
+
+## Known gaps and operator action
+
+- macOS and Windows bundles remain unsigned. Signing needs operator-provided `APPLE_CERTIFICATE` and `WINDOWS_CERT_PFX` secrets.
+- There is intentionally no auto-updater; updates remain explicit downloads from the release page.
+- Billing verification used intercepted fixture responses. The external billing service was not contacted because it is outside this work order's resource scope.
+
+No prohibited service, app setting, secret, database, or non-`sf-vault-cross-search` deployment resource was read or changed.

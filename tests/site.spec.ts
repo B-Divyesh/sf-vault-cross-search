@@ -2,6 +2,31 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 
+async function installDesktopFixture(page: import("@playwright/test").Page) {
+  await page.addInitScript(() => {
+    const openedEntries: unknown[] = [];
+    Object.assign(window, {
+      __openedEntries: openedEntries,
+      __TAURI_INTERNALS__: {
+        invoke: async (command: string, args: Record<string, unknown> = {}) => {
+          if (command === "session_state") return {
+            vaults: [{ id: "work", name: "Work.kdbx", entries: 2, unlocked: true }],
+            locked: false,
+            minutesRemaining: 15
+          };
+          if (command === "search_entries") return [
+            { id: "vpn", vaultId: "work", vaultName: "Work.kdbx", title: "Acme VPN", username: "rchen", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+            { id: "status", vaultId: "work", vaultName: "Work.kdbx", title: "Acme status", username: "on-call", url: "https://status.acme.example", group: "Operations / On-call" }
+          ];
+          if (command === "open_entry") { openedEntries.push(args); return null; }
+          if (command === "lock_all") return null;
+          throw new Error(`Unexpected desktop fixture command: ${command}`);
+        }
+      }
+    });
+  });
+}
+
 test("@claim:demo-search searches bundled metadata across three separate sample vaults", async ({ page }) => {
   await page.goto("/demo/");
   await expect(page.getByRole("heading", { name: "Find an entry across separate vaults" })).toBeVisible();
@@ -45,6 +70,8 @@ test("@claim:demo-privacy sends no third-party requests during the complete samp
   await page.goto("/demo/");
   await page.getByLabel("Search sample vault metadata").fill("river");
   await page.getByRole("button", { name: "Reset demo" }).click();
+  await page.getByRole("link", { name: "Start for real" }).click();
+  await expect(page).toHaveURL(/\/$/);
   expect(externalRequests).toEqual([]);
 });
 
@@ -65,18 +92,68 @@ test("@claim:site-resource-privacy loads site and policy pages without third-par
   page.on("request", (request) => {
     if (!request.url().startsWith("http://127.0.0.1:4173")) externalRequests.push(request.url());
   });
-  for (const path of ["/", "/privacy/", "/terms/"]) await page.goto(path);
+  for (const path of ["/", "/privacy/", "/terms/", "/404.html"]) await page.goto(path);
   expect(externalRequests).toEqual([]);
 });
 
-test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, crash-reporting, or sync request", async ({ page }) => {
+test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, crash-reporting, or sync request", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop webview claim");
   const externalRequests: string[] = [];
   page.on("request", (request) => {
     if (!request.url().startsWith("http://127.0.0.1:1420")) externalRequests.push(request.url());
   });
+  await installDesktopFixture(page);
   await page.goto("http://127.0.0.1:1420/");
   await page.getByRole("button", { name: "Toggle color theme" }).click();
+  await page.getByRole("button", { name: "Field license" }).click();
+  await expect(page.getByRole("dialog", { name: "Search without borders" })).toBeVisible();
+  await page.getByRole("button", { name: "Close license dialog" }).click();
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+  await page.getByLabel("Search unlocked vaults").fill("acme");
+  await expect(page.getByRole("option")).toHaveCount(2);
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: unknown[] }).__openedEntries.length)).toBe(1);
   expect(externalRequests).toEqual([]);
+});
+
+test("@claim:desktop-keyboard-search focuses, moves through, and opens desktop results", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop webview claim");
+  await installDesktopFixture(page);
+  await page.goto("http://127.0.0.1:1420/");
+  const search = page.getByLabel("Search unlocked vaults");
+  await expect(search).toBeEnabled();
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+  await expect(search).toBeFocused();
+  await search.fill("acme");
+  await expect(page.getByRole("option")).toHaveCount(2);
+  await page.keyboard.press("ArrowDown");
+  const selectedOption = page.getByRole("option").nth(1);
+  await expect(selectedOption).toHaveAttribute("aria-selected", "true");
+  const expectedEntryId = (await selectedOption.textContent())?.includes("Acme VPN") ? "vpn" : "status";
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: Array<Record<string, string>> }).__openedEntries[0])).toEqual({ vaultId: "work", entryId: expectedEntryId });
+});
+
+test("@claim:one-time-pricing protects the price, terms, and checkout target", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop license dialog claim");
+  const checkout = "https://api.sociobot.in/api/v1/products/vault-cross-search/checkout";
+  await page.goto("/");
+  await expect(page.getByText("$19 once", { exact: true })).toBeVisible();
+  await expect(page.getByText("One-time purchase", { exact: true })).toBeVisible();
+  await expect(page.getByText("Unlimited vaults on this device. No subscription.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Buy a license" })).toHaveAttribute("href", checkout);
+  await page.goto("http://127.0.0.1:1420/");
+  await page.getByRole("button", { name: "Field license" }).click();
+  await expect(page.getByRole("dialog", { name: "Search without borders" })).toContainText("$19 one-time license");
+  await expect(page.getByRole("dialog", { name: "Search without borders" })).toContainText("No subscription.");
+  await expect(page.getByRole("link", { name: "Buy a license" })).toHaveAttribute("href", checkout);
+  await page.goto("/terms/");
+  await expect(page.locator("main")).toContainText("A $19 one-time purchase enables unlimited vaults");
+  await expect(page.locator("main")).toContainText("There is no subscription.");
+  const readme = readFileSync("README.md", "utf8");
+  expect(readme).toContain("A $19 one-time license enables unlimited vaults");
+  expect(readme).toContain("There is no subscription.");
 });
 
 test("@claim:license-verdict-storage stores a verified token verdict locally", async ({ page }) => {
@@ -149,7 +226,7 @@ test("malformed cached license verdict is discarded without stopping initializat
 });
 
 test("landing and legal pages have no serious accessibility violations", async ({ page }) => {
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/"]) {
+  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
     await page.goto(path);
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((issue) => ["serious", "critical"].includes(issue.impact ?? ""))).toEqual([]);
@@ -159,7 +236,7 @@ test("landing and legal pages have no serious accessibility violations", async (
 test("desktop and mobile routes load without browser console errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-  for (const path of ["/", "/demo/", "/privacy/", "/terms/"]) await page.goto(path);
+  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) await page.goto(path);
   expect(errors).toEqual([]);
 });
 
@@ -174,11 +251,64 @@ test("demo is operable by keyboard", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Reset demo" })).toBeFocused();
 });
 
+test("demo keyboard focus has a visible three-pixel treatment", async ({ page }) => {
+  await page.goto("/demo/");
+  const input = page.getByLabel("Search sample vault metadata");
+  const container = input.locator("..");
+  const before = await container.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { outline: style.outline, borderColor: style.borderColor, boxShadow: style.boxShadow };
+  });
+  await page.keyboard.press(process.platform === "darwin" ? "Meta+K" : "Control+K");
+  await expect(input).toBeFocused();
+  const after = await container.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { outline: style.outline, outlineStyle: style.outlineStyle, outlineWidth: style.outlineWidth, borderColor: style.borderColor, boxShadow: style.boxShadow };
+  });
+  expect(after.outlineStyle).toBe("solid");
+  expect(after.outlineWidth).toBe("3px");
+  expect(after.outline).not.toBe(before.outline);
+  expect(after.borderColor).not.toBe(before.borderColor);
+  expect(after.boxShadow).not.toBe(before.boxShadow);
+});
+
 test("mobile demo keeps its primary controls and results within 390px", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile project only");
   await page.goto("/demo/");
   await expect(page.getByRole("button", { name: "Reset demo" })).toBeVisible();
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
+});
+
+test("all public controls meet the 44px mobile target minimum", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile", "mobile project only");
+  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
+    await page.goto(path);
+    const undersized = await page.locator("a[href], button, input").evaluateAll((elements) => elements
+      .filter((element) => (element as HTMLElement).checkVisibility())
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { label: element.getAttribute("aria-label") || element.textContent?.trim() || element.getAttribute("placeholder"), width: rect.width, height: rect.height };
+      })
+      .filter(({ width, height }) => width < 44 || height < 44));
+    expect(undersized, `${path} contains undersized interactive targets`).toEqual([]);
+  }
+});
+
+test("every public route uses the standard skip, header, footer, and build shell", async ({ page }) => {
+  for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
+    await page.goto(path);
+    await expect(page.locator("main")).toHaveCount(1);
+    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator("header.site-header")).toHaveCount(1);
+    await expect(page.locator("footer")).toHaveCount(1);
+    await expect(page.getByText("Built by Param Factory · Build v0.1.2", { exact: true })).toBeVisible();
+    const skip = page.locator(".skip-link");
+    await expect(skip).toHaveAttribute("href", "#main");
+    await page.keyboard.press("Tab");
+    await expect(skip).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("#main")).toBeFocused();
+  }
 });
 
 test("site build includes explicit static-host headers and a real 404 response", async ({ page }) => {
