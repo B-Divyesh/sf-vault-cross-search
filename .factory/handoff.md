@@ -26,10 +26,14 @@
 - `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`: PASS.
 - `sh -n site/public/install.sh`: PASS.
 - `npm run build`: PASS; outputs `dist/app` and `dist/site`.
-- All 32 commands in `.factory/claims.json`: pending clean-clone rerun.
+- All 32 exact commands in `.factory/claims.json`: PASS from a clean clone of `c482929`.
+- Clean-clone `npm test`: PASS — 9 Vitest, 50 Playwright passed with 10 intentional project skips, 16 Rust tests.
 - Playwright axe coverage: zero serious or critical issues on home, both demo entries, Privacy, Terms, and 404 at desktop and mobile sizes.
 - Local URL verifier: PASS; title, `lang=en`, one H1, main landmark, image alternatives, button labels, and no console errors.
 - Local mobile Lighthouse: performance 97, accessibility 100, best practices 100, SEO 100; LCP 1.98 s, CLS 0.089, TBT 0 ms, transfer 186,589 bytes.
+- Cold live mobile Lighthouse: performance 100, accessibility 100, best practices 100, SEO 100; LCP 1.66 s, CLS 0, TBT 0 ms, transfer 185,157 bytes.
+- Cold live URL verifier: PASS in 937 ms with no console errors, `lang=en`, one H1, main landmark, image alternatives, and button labels.
+- Cold live 390×844 check: PASS — all three first-screen facts and Privacy visible; demo banner, controls, and both Work.kdbx results visible; Reset demo restored all six samples; Start for real cleared demo storage; navigation and Back focus the H1; no valid-route console errors; no serious/critical axe findings; unknown route returned HTTP 404 with `Page not found`.
 - Built site payload: JS 7,441 bytes raw; CSS 15,975 bytes raw; self-hosted fonts 109,604 bytes; mobile AVIF hero 64,037 bytes.
 
 ## Evidence
@@ -39,11 +43,25 @@
 - `.factory/evidence/mobile-demo-390x844.png`
 - `.factory/evidence/desktop-home-1440x900.png`
 - `.factory/evidence/verify-local/verify.json`
+- `.factory/evidence/claims-clean-clone.log`
+- `.factory/evidence/full-suite-clean-clone.log`
+- `.factory/evidence/live-mobile-home-390x844.png`
+- `.factory/evidence/live-mobile-demo-390x844.png`
+- `.factory/evidence/live-desktop-home-1440x900.png`
+- `.factory/evidence/live-404-390x844.png`
+- `.factory/evidence/verify-live/verify.json`
+- `.factory/evidence/lighthouse-live.json`
 - `.factory/evidence/lighthouse-local.json`
 
 ## Deployment and release
 
-Pending final commit, clean-clone claim run, v0.1.4 GitHub release, production deployment, and cold live verification.
+- Product commit: `c4829292c2e51ac344f694d85e82c5f766eb6dab`; pushed to `main`.
+- Tag and release: [`v0.1.4`](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.4).
+- Release workflow `33571441788`: PASS for macOS arm64, macOS x64, Windows x64, Linux x64, and publish.
+- Published assets: both macOS DMGs, Windows EXE/MSI, Linux AppImage/DEB, `SHA256SUMS`, and `latest.json`.
+- Release verification: `latest.json` names all four platform targets; the downloaded Linux DEB passed its published SHA-256 checksum; a cold live Linux click resolved to the v0.1.4 AppImage with no console errors.
+- Static deployment: `cd368634-4854-49f6-80a8-1a5bd1204d6e`.
+- Live URL: `https://vault-cross-search.sociobot.in` (HTTP 200 over managed TLS).
 
 ## Operator action
 

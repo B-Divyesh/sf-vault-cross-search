@@ -1,0 +1,73 @@
+
+> vault-cross-search@0.1.4 test
+> vitest run src && playwright test && cargo test --manifest-path src-tauri/Cargo.toml
+
+
+ RUN  v3.2.7 /tmp/vcs-clean-rmDBzr/repo
+
+ ✓ src/license.test.ts (5 tests) 6ms
+ ✓ src/search.test.ts (4 tests) 4ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  23:28:52
+   Duration  633ms (transform 121ms, setup 0ms, collect 173ms, tests 10ms, environment 0ms, prepare 286ms)
+
+[WebServer] (node:46401) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:46433) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:46465) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 60 tests using 2 workers
+(node:46483) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46485) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46483) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:46485) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+···(node:46683) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+····(node:46683) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+°·°·············°°°°················°°··°··········°·
+  10 skipped
+  50 passed (33.1s)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.33s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/vault_cross_search_lib-9580fd6acc789e73)
+
+running 16 tests
+test tests::claim_associated_app_receives_the_owning_vault_path ... ok
+test tests::claim_auto_lock_inactivity_expiry_locks_a_populated_session ... ok
+test tests::claim_decrypted_database_is_dropped_after_metadata_extraction ... ok
+test tests::claim_desktop_has_no_clipboard_autofill_or_password_storage_paths ... ok
+test tests::claim_index_has_no_disk_persistence_path ... ok
+test tests::claim_metadata_only_index_collects_only_allowed_fields ... ok
+test tests::claim_no_vault_custody_recovery_or_sync_path_exists ... ok
+test tests::claim_quit_clears_the_populated_session ... ok
+test tests::claim_session_lock_clears_every_vault ... ok
+test tests::claim_single_vault_lock_clears_only_that_vault ... ok
+test tests::claim_unlock_credential_is_cleared_after_key_derivation ... ok
+test tests::empty_session_is_locked ... ok
+test tests::claim_optional_key_file_unlock_and_invalid_key_recovery ... ok
+test tests::invalid_unlock_does_not_prevent_valid_recovery ... ok
+test tests::license_does_not_branch_core_safety_behavior ... ok
+test tests::kdbx_round_trip_can_be_unlocked_and_indexed ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.26s
+
+     Running unittests src/main.rs (src-tauri/target/debug/deps/vault_cross_search-3e92716a0a46a66e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests vault_cross_search_lib
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

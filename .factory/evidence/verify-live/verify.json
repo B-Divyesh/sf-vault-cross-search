@@ -1,0 +1,14 @@
+{
+  "url": "https://vault-cross-search.sociobot.in",
+  "loadMs": 937,
+  "errors": [],
+  "a11y": {
+    "title": "Vault Cross Search — find entries across local vaults",
+    "lang": "en",
+    "h1": 1,
+    "main": true,
+    "imgsMissingAlt": 0,
+    "buttonsUnlabeled": 0,
+    "textLength": 2077
+  }
+}
