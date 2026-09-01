@@ -14,21 +14,30 @@ test("@claim:verified-installers verifies release checksums before installing", 
     const releaseDir = join(root, "release-assets");
     mkdirSync(releaseDir);
     const releaseFiles = [
-      "macos-arm64-Vault.Cross.Search_0.1.2_aarch64.dmg",
-      "macos-x64-Vault.Cross.Search_0.1.2_x64.dmg",
-      "windows-x64-Vault.Cross.Search_0.1.2_x64_en-US.msi",
-      "linux-x64-Vault.Cross.Search_0.1.2_amd64.AppImage",
-      "linux-x64-Vault.Cross.Search_0.1.2_amd64.deb"
+      "macos-arm64-Vault Cross Search_0.1.3_aarch64.dmg",
+      "macos-x64-Vault Cross Search_0.1.3_x64.dmg",
+      "windows-x64-Vault Cross Search_0.1.3_x64_en-US.msi",
+      "windows-x64-Vault Cross Search_0.1.3_x64-setup.exe",
+      "linux-x64-Vault Cross Search_0.1.3_amd64.AppImage",
+      "linux-x64-Vault Cross Search_0.1.3_amd64.deb"
     ];
     for (const name of releaseFiles) writeFileSync(join(releaseDir, name), `fixture:${name}`);
-    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.2", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
+    const normalizeRun = spawnSync(process.execPath, ["scripts/normalize-release-asset-names.mjs", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
+    expect(normalizeRun.status, normalizeRun.stderr).toBe(0);
+    const checksumWrite = spawnSync("sh", ["-c", "sha256sum * > SHA256SUMS"], { cwd: releaseDir, encoding: "utf8" });
+    expect(checksumWrite.status, checksumWrite.stderr).toBe(0);
+    const checksumCheck = spawnSync("sha256sum", ["-c", "SHA256SUMS"], { cwd: releaseDir, encoding: "utf8" });
+    expect(checksumCheck.status, checksumCheck.stderr).toBe(0);
+    expect(checksumCheck.stdout.match(/: OK$/gm)).toHaveLength(6);
+    expect(readFileSync(join(releaseDir, "SHA256SUMS"), "utf8")).not.toContain("Vault Cross Search");
+    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.3", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
     expect(manifestRun.status, manifestRun.stderr).toBe(0);
     const manifest = JSON.parse(readFileSync(join(releaseDir, "latest.json"), "utf8")) as { version: string; platforms: Record<string, { name: string; url: string; sha256: string }> };
-    expect(manifest.version).toBe("v0.1.2");
+    expect(manifest.version).toBe("v0.1.3");
     expect(Object.keys(manifest.platforms).sort()).toEqual(["linux-deb", "linux-x64", "macos-arm64", "macos-x64", "windows-x64"]);
     for (const asset of Object.values(manifest.platforms)) {
       expect(asset.sha256).toBe(sha256(readFileSync(join(releaseDir, asset.name))));
-      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.2/");
+      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.3/");
     }
 
     const fixtureDir = join(root, "fixture");
@@ -62,6 +71,7 @@ test("@claim:verified-installers verifies release checksums before installing", 
     expect(powershell.indexOf("Get-FileHash")).toBeLessThan(powershell.indexOf("Start-Process"));
     expect(powershell).toContain("Checksum verification failed; nothing was installed.");
     const workflow = readFileSync(".github/workflows/release.yml", "utf8");
+    expect(workflow).toContain("normalize-release-asset-names.mjs");
     expect(workflow).toContain("sha256sum * > SHA256SUMS");
     expect(workflow).toContain("release-assets/*");
   } finally {

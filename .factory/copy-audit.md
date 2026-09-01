@@ -1,4 +1,4 @@
-# Copy audit — 2026-09-01 repair 3
+# Copy audit — 2026-09-01 repair 4
 
 All landing-page sentences, headings, labels, facts, and actions were read aloud and counted. The first screen states the job, audience, first action, and three facts in one breath.
 
@@ -66,7 +66,7 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 | Local software for deliberately separate vaults. | 6 | Pass |
 | Hero artwork generated for this product; no stock assets. | 9 | Pass |
 | Built by Param Factory | 4 | Pass |
-| Build v0.1.2 | 2 | Pass |
+| Build v0.1.3 | 2 | Pass |
 
 No sentence exceeds 22 words. No banned marketing word appears; “Unlock” names the literal vault action.
 

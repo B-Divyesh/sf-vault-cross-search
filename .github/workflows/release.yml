@@ -71,6 +71,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           cd release-assets
+          node ../scripts/normalize-release-asset-names.mjs .
           sha256sum * > SHA256SUMS
           node ../scripts/release-manifest.mjs "$TAG" "$REPO" .
       - name: Publish GitHub Release

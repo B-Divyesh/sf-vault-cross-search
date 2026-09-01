@@ -27,3 +27,9 @@ footer nav a{min-width:44px;min-height:44px;padding:0 4px;display:inline-flex;al
 .demo-input input{min-height:44px}
 .demo-input:focus-within{outline:3px solid var(--signal);outline-offset:4px;border-color:var(--signal);box-shadow:5px 5px 0 color-mix(in srgb,var(--signal) 28%,transparent)}
 @media(max-width:520px){.demo-input{height:auto;min-height:58px}}
+
+/* At 200% zoom, the vault rail becomes a compact scope list before result text is squeezed. */
+.demo-results small{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.demo-results li>span:nth-child(3) strong{overflow-wrap:anywhere}
+@media(max-width:840px){.demo-workspace{display:block;border:0}.demo-rail{border-right:0;border-bottom:1px solid var(--line);padding:28px 18px}.demo-rail ul{grid-template-columns:repeat(3,minmax(0,1fr))}.demo-rail li,.demo-rail li>span:last-child{min-width:0}.demo-rail li strong,.demo-rail li small{overflow-wrap:anywhere}}
+@media(max-width:520px){.demo-rail ul{grid-template-columns:1fr}.demo-rail li{padding:10px}.demo-rail li>span:last-child{min-width:0}.demo-rail li strong,.demo-rail li small{overflow-wrap:anywhere}}

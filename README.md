@@ -39,6 +39,8 @@ The factory static deployment command is exactly `npm run build:site`; its outpu
 
 The landing page detects macOS, Windows, or Linux and resolves its main button from the release `latest.json` manifest. Releases contain unsigned `.dmg`, `.msi`/`.exe`, `.AppImage`, and `.deb` bundles plus `SHA256SUMS`.
 
+Release asset names are normalized before upload, so the downloaded names and `SHA256SUMS` agree. After downloading an installer and `SHA256SUMS` into the same directory, verify them with `sha256sum -c SHA256SUMS`.
+
 ```sh
 # macOS / Linux (downloads and verifies SHA256 first)
 curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
@@ -47,11 +49,11 @@ curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
 irm https://vault-cross-search.sociobot.in/install.ps1 | iex
 ```
 
-To publish the repaired v0.1.2 release after verification:
+To publish the repaired v0.1.3 release after verification:
 
 ```sh
-git tag v0.1.2
-git push origin main v0.1.2
+git tag v0.1.3
+git push origin main v0.1.3
 ```
 
 The tag triggers [the release workflow](.github/workflows/release.yml). Platform runners create installers; the publish job generates checksums and `latest.json` before attaching everything to one GitHub Release.

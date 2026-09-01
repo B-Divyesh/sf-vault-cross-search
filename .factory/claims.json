@@ -133,6 +133,13 @@
     "sandbox": "Fixture-backed desktop webview with one unlocked vault and two results; use only keyboard commands and assert the second result's vault and entry identifiers reach the production open command."
   },
   {
+    "id": "desktop-multi-vault-search",
+    "claim": "The desktop app searches metadata across every unlocked vault and opens the selected result's owning vault.",
+    "where": "Landing headline, desktop ready state, and README",
+    "test": "npx playwright test --grep @claim:desktop-multi-vault-search",
+    "sandbox": "Fixture-backed desktop webview with unlocked Work.kdbx and Personal.kdbx vaults; search acme; assert results from both owners, select Personal with ArrowDown, and assert Enter sends its vault and entry identifiers to the production open command."
+  },
+  {
     "id": "no-secret-actions",
     "claim": "The desktop app has no clipboard write, autofill, or password-persistence path.",
     "where": "Landing page, privacy policy, README",
@@ -200,6 +207,6 @@
     "claim": "Release manifests publish a SHA-256 for every platform installer, and the one-line installers verify it before installing.",
     "where": "Landing install section and README",
     "test": "npx playwright test tests/installers.spec.ts --grep @claim:verified-installers --project=desktop",
-    "sandbox": "Generate a five-asset release manifest; assert every published checksum; run the Linux installer against matching and mismatched local fixtures; inspect the Windows verification-before-launch boundary and release upload workflow."
+    "sandbox": "Generate six release assets from original filenames containing spaces; normalize final upload names, run sha256sum -c SHA256SUMS, assert every published checksum, run the Linux installer against matching and mismatched local fixtures, and inspect the Windows verification-before-launch boundary and release upload workflow."
   }
 ]

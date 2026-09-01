@@ -2,29 +2,41 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFileSync } from "node:fs";
 
-async function installDesktopFixture(page: import("@playwright/test").Page) {
-  await page.addInitScript(() => {
+async function installDesktopFixture(page: import("@playwright/test").Page, options: { multiVault?: boolean } = {}) {
+  await page.addInitScript((multiVault) => {
     const openedEntries: unknown[] = [];
+    const vaults = multiVault
+      ? [
+          { id: "work", name: "Work.kdbx", entries: 1, unlocked: true },
+          { id: "personal", name: "Personal.kdbx", entries: 1, unlocked: true }
+        ]
+      : [{ id: "work", name: "Work.kdbx", entries: 2, unlocked: true }];
+    const entries = multiVault
+      ? [
+          { id: "vpn", vaultId: "work", vaultName: "Work.kdbx", title: "Acme VPN", username: "rchen", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+          { id: "billing", vaultId: "personal", vaultName: "Personal.kdbx", title: "Personal billing", username: "acme", url: "https://billing.acme.example", group: "Money / Bills" }
+        ]
+      : [
+          { id: "vpn", vaultId: "work", vaultName: "Work.kdbx", title: "Acme VPN", username: "rchen", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+          { id: "status", vaultId: "work", vaultName: "Work.kdbx", title: "Acme status", username: "on-call", url: "https://status.acme.example", group: "Operations / On-call" }
+        ];
     Object.assign(window, {
       __openedEntries: openedEntries,
       __TAURI_INTERNALS__: {
         invoke: async (command: string, args: Record<string, unknown> = {}) => {
           if (command === "session_state") return {
-            vaults: [{ id: "work", name: "Work.kdbx", entries: 2, unlocked: true }],
+            vaults,
             locked: false,
             minutesRemaining: 15
           };
-          if (command === "search_entries") return [
-            { id: "vpn", vaultId: "work", vaultName: "Work.kdbx", title: "Acme VPN", username: "rchen", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
-            { id: "status", vaultId: "work", vaultName: "Work.kdbx", title: "Acme status", username: "on-call", url: "https://status.acme.example", group: "Operations / On-call" }
-          ];
+          if (command === "search_entries") return entries;
           if (command === "open_entry") { openedEntries.push(args); return null; }
           if (command === "lock_all") return null;
           throw new Error(`Unexpected desktop fixture command: ${command}`);
         }
       }
     });
-  });
+  }, options.multiVault === true);
 }
 
 test("@claim:demo-search searches bundled metadata across three separate sample vaults", async ({ page }) => {
@@ -133,6 +145,23 @@ test("@claim:desktop-keyboard-search focuses, moves through, and opens desktop r
   const expectedEntryId = (await selectedOption.textContent())?.includes("Acme VPN") ? "vpn" : "status";
   await page.keyboard.press("Enter");
   await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: Array<Record<string, string>> }).__openedEntries[0])).toEqual({ vaultId: "work", entryId: expectedEntryId });
+});
+
+test("@claim:desktop-multi-vault-search searches two unlocked desktop vaults and opens the selected owner", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop webview claim");
+  await installDesktopFixture(page, { multiVault: true });
+  await page.goto("http://127.0.0.1:1420/");
+  const search = page.getByLabel("Search unlocked vaults");
+  await search.fill("acme");
+  const options = page.getByRole("option");
+  await expect(options).toHaveCount(2);
+  await expect(page.locator("#status")).toHaveText("2 matches across 2 vaults");
+  await expect(options.nth(0)).toContainText("Work.kdbx");
+  await expect(options.nth(1)).toContainText("Personal.kdbx");
+  await page.keyboard.press("ArrowDown");
+  await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: Array<Record<string, string>> }).__openedEntries[0])).toEqual({ vaultId: "personal", entryId: "billing" });
 });
 
 test("@claim:one-time-pricing protects the price, terms, and checkout target", async ({ page }, testInfo) => {
@@ -279,6 +308,21 @@ test("mobile demo keeps its primary controls and results within 390px", async ({
   await expect(page.locator("body")).toHaveJSProperty("scrollWidth", 390);
 });
 
+test("demo keeps result metadata visible at 720px and the 200% zoom width proxy", async ({ page }) => {
+  for (const width of [720, 195]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/demo/");
+    const layout = await page.evaluate(() => {
+      const clipped = [...document.querySelectorAll<HTMLElement>("#demo-results li > span:nth-child(2) strong, #demo-results li > span:nth-child(2) small, #demo-results li > span:nth-child(3) strong, #demo-results li > span:nth-child(3) small")]
+        .filter((element) => element.scrollWidth > element.clientWidth + 1)
+        .map((element) => element.textContent);
+      return { bodyWidth: document.body.scrollWidth, viewportWidth: document.documentElement.clientWidth, clipped };
+    });
+    expect(layout.bodyWidth, `${width}px body width`).toBe(layout.viewportWidth);
+    expect(layout.clipped, `${width}px result metadata is clipped`).toEqual([]);
+  }
+});
+
 test("all public controls meet the 44px mobile target minimum", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "mobile", "mobile project only");
   for (const path of ["/", "/demo/", "/privacy/", "/terms/", "/404.html"]) {
@@ -301,7 +345,7 @@ test("every public route uses the standard skip, header, footer, and build shell
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator("header.site-header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
-    await expect(page.getByText("Built by Param Factory · Build v0.1.2", { exact: true })).toBeVisible();
+    await expect(page.getByText("Built by Param Factory · Build v0.1.3", { exact: true })).toBeVisible();
     const skip = page.locator(".skip-link");
     await expect(skip).toHaveAttribute("href", "#main");
     await page.keyboard.press("Tab");

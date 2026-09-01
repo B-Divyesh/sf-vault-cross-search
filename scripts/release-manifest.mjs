@@ -16,11 +16,10 @@ const selected = {
 const platforms = {};
 for (const [platform, name] of Object.entries(selected)) {
   if (!name) continue;
-  // GitHub Release normalizes spaces in uploaded asset names to dots.
-  const uploadedName = name.replaceAll(" ", ".");
+  if (name.includes(" ")) throw new Error(`release asset names must be normalized before manifest generation: ${name}`);
   platforms[platform] = {
-    name: uploadedName,
-    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(uploadedName)}`,
+    name,
+    url: `https://github.com/${repo}/releases/download/${tag}/${encodeURIComponent(name)}`,
     sha256: createHash("sha256").update(readFileSync(join(dir, name))).digest("hex")
   };
 }
