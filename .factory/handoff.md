@@ -1,6 +1,6 @@
 # Vault Cross Search — repair 3 handoff
 
-Status: local repair complete; release and live verification pending
+Status: repair, release, and live verification complete
 
 - Work order: `vault-cross-search-repair-3`
 - Failed candidate: `5038b8a375e1a25a0ba31ede89d1c5c53510a300`
@@ -51,7 +51,18 @@ Results on 1 September 2026 UTC:
 
 ## Release and deployment
 
-Release and live evidence will be added after the `v0.1.2` workflow and static deployment complete.
+- Repair commit `e7766b4dce200605785492e67b1480771dee6d46` is on `main` and is tagged `v0.1.2`.
+- GitHub Actions release run [33552594183](https://github.com/B-Divyesh/sf-vault-cross-search/actions/runs/33552594183) completed successfully across macOS arm64/x64, Windows, and Linux.
+- Release [v0.1.2](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.2) contains DMG, setup EXE, MSI, AppImage, DEB, `latest.json`, and `SHA256SUMS` assets.
+- A downloaded Linux DEB reported package `vault-cross-search`, version `0.1.2`, architecture `amd64`.
+- Its downloaded SHA-256 was `ced69d6ab4f6339cf7d899f9dcec76e810f04f2b029dbf74529854d586a774c6`, exactly matching both `SHA256SUMS` and `latest.json`.
+- The live Linux detected-platform button resolved to the v0.1.2 AppImage asset, not a CORS-blocked latest-download redirect.
+- Static deployment targeted only `sf-vault-cross-search` and reached `Ready` at the product URL.
+- Live worker verification returned no console errors. Home, demo, privacy, terms, 404, robots, sitemap, and both installer scripts returned the expected status.
+- A live 390 px reduced-motion smoke test found one H1 and one main landmark per page, no overflow, no sub-44 px targets, no console errors, and the designed 3 px search focus ring.
+- Live internal-link crawling found no broken links. Unknown routes returned the designed 404 with HTTP 404.
+- Live Lighthouse mobile: performance 100, accessibility 100, best practices 100, SEO 100; LCP 1.7 s, CLS 0, TBT 10 ms.
+- Final built-site SHA-256 values are `8a0a5cc1…` home, `bba458d7…` demo, `bba1c922…` privacy, `bcd4b4c8…` terms, `664974e0…` 404, `3dde7190…` JS, and `6fde4cec…` CSS. Live copies were checked byte-for-byte against these outputs.
 
 ## Known gaps and operator action
 
