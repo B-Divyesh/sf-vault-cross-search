@@ -66,7 +66,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <button class="dialog-close" value="cancel" aria-label="Close license dialog" type="submit">×</button>
       <p class="eyebrow">Unlimited vaults</p><h2 id="license-title">License options</h2>
       <p class="dialog-copy">The free app searches two vaults. The planned unlimited-vault license is $19 once, with no subscription.</p>
-      <p class="purchase-unavailable" role="status"><strong>Purchase unavailable.</strong> Checkout registration is pending.</p>
+      <p class="purchase-unavailable" role="status"><strong>Purchase unavailable.</strong> Purchases are not open yet.</p>
       <div class="rule"><span>Restore an existing license</span></div>
       <label for="license-token">License token</label><input id="license-token" type="text" autocomplete="off" spellcheck="false" />
       <p class="form-error" id="license-error" role="alert"></p>
@@ -101,7 +101,7 @@ function renderResults() {
   const host = $("#results");
   if (!state.vaults.length) {
     $("#status").textContent = "";
-    host.innerHTML = `<div class="map-empty"><div class="map-art" aria-hidden="true"><span></span></div><p class="eyebrow">Index clear</p><h2>Try a fake sample first.</h2><p>Load a bundled KeePass project, search its metadata, then lock it. No real credentials or vault file are used.</p><div class="first-run-actions"><button class="primary-button" data-load-sample type="button">Load sample project</button><button class="quiet-button" data-add-empty type="button">Add your first vault</button></div><h3 class="walkthrough-title" id="first-run-walkthrough">First-run walkthrough</h3><ol class="first-run-walkthrough" aria-labelledby="first-run-walkthrough"><li><span>1</span><div><strong>Load sample project</strong><small>Opens a bundled fake .kdbx in this session only.</small></div></li><li><span>2</span><div><strong>Search “acme”</strong><small>See the title, username, URL, group, and owning vault.</small></div></li><li><span>3</span><div><strong>Lock all</strong><small>Clear the sample index before adding your own vault.</small></div></li></ol><small>Nothing is uploaded. Nothing is written to disk.</small></div>`;
+    host.innerHTML = `<div class="map-empty"><div class="map-art" aria-hidden="true"><span></span></div><p class="eyebrow">Index clear</p><h2>Try a fake sample first.</h2><p>Load a bundled fake vault, search its metadata, then lock it. No real credentials or vault files are used.</p><div class="first-run-actions"><button class="primary-button" data-load-sample type="button">Load sample project</button><button class="quiet-button" data-add-empty type="button">Add your first vault</button></div><h3 class="walkthrough-title" id="first-run-walkthrough">First-run walkthrough</h3><ol class="first-run-walkthrough" aria-labelledby="first-run-walkthrough"><li><span>1</span><div><strong>Load sample project</strong><small>Opens a bundled fake vault in this session only.</small></div></li><li><span>2</span><div><strong>Search “acme”</strong><small>See the title, username, URL, group, and owning vault.</small></div></li><li><span>3</span><div><strong>Lock all</strong><small>Clear the sample index before adding your own vault.</small></div></li></ol><small>Nothing is uploaded. Nothing is written to disk.</small></div>`;
     return;
   }
   if (!query) {
@@ -145,7 +145,7 @@ async function chooseVault() {
 
 async function loadSampleProject() {
   if (!isTauri) {
-    $("#status").textContent = "Open the installed desktop app to load its bundled sample project.";
+    $("#status").textContent = "Open the installed desktop app to load its bundled sample vault.";
     return;
   }
   const button = document.querySelector<HTMLButtonElement>("[data-load-sample]");

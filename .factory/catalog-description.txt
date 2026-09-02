@@ -1,1 +1,1 @@
-Find KeePass entries across separate local vaults without merging files or indexing passwords.
+Find entries across separate KeePass vaults without merging them or indexing passwords.

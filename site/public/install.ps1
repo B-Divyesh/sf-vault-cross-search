@@ -18,7 +18,7 @@ try {
     Start-Process $installer -Wait
   }
   Write-Host "Installed Vault Cross Search from a verified release asset."
-  Write-Host "Publisher signing is not configured, so Windows may show SmartScreen."
+  Write-Host "The installer is not signed by a verified publisher."
 } finally {
   Remove-Item -Recurse -Force $temp -ErrorAction SilentlyContinue
 }

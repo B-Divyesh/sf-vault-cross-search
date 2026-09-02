@@ -14,12 +14,12 @@ test("@claim:verified-installers verifies release checksums before installing", 
     const releaseDir = join(root, "release-assets");
     mkdirSync(releaseDir);
     const releaseFiles = [
-      "macos-arm64-Vault Cross Search_0.1.5_aarch64.dmg",
-      "macos-x64-Vault Cross Search_0.1.5_x64.dmg",
-      "windows-x64-Vault Cross Search_0.1.5_x64_en-US.msi",
-      "windows-x64-Vault Cross Search_0.1.5_x64-setup.exe",
-      "linux-x64-Vault Cross Search_0.1.5_amd64.AppImage",
-      "linux-x64-Vault Cross Search_0.1.5_amd64.deb"
+      "macos-arm64-Vault Cross Search_0.1.6_aarch64.dmg",
+      "macos-x64-Vault Cross Search_0.1.6_x64.dmg",
+      "windows-x64-Vault Cross Search_0.1.6_x64_en-US.msi",
+      "windows-x64-Vault Cross Search_0.1.6_x64-setup.exe",
+      "linux-x64-Vault Cross Search_0.1.6_amd64.AppImage",
+      "linux-x64-Vault Cross Search_0.1.6_amd64.deb"
     ];
     for (const name of releaseFiles) writeFileSync(join(releaseDir, name), `fixture:${name}`);
     const normalizeRun = spawnSync(process.execPath, ["scripts/normalize-release-asset-names.mjs", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
@@ -30,14 +30,14 @@ test("@claim:verified-installers verifies release checksums before installing", 
     expect(checksumCheck.status, checksumCheck.stderr).toBe(0);
     expect(checksumCheck.stdout.match(/: OK$/gm)).toHaveLength(6);
     expect(readFileSync(join(releaseDir, "SHA256SUMS"), "utf8")).not.toContain("Vault Cross Search");
-    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.5", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
+    const manifestRun = spawnSync(process.execPath, ["scripts/release-manifest.mjs", "v0.1.6", "B-Divyesh/sf-vault-cross-search", releaseDir], { cwd: process.cwd(), encoding: "utf8" });
     expect(manifestRun.status, manifestRun.stderr).toBe(0);
     const manifest = JSON.parse(readFileSync(join(releaseDir, "latest.json"), "utf8")) as { version: string; platforms: Record<string, { name: string; url: string; sha256: string }> };
-    expect(manifest.version).toBe("v0.1.5");
+    expect(manifest.version).toBe("v0.1.6");
     expect(Object.keys(manifest.platforms).sort()).toEqual(["linux-deb", "linux-x64", "macos-arm64", "macos-x64", "windows-x64"]);
     for (const asset of Object.values(manifest.platforms)) {
       expect(asset.sha256).toBe(sha256(readFileSync(join(releaseDir, asset.name))));
-      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.5/");
+      expect(asset.url).toContain("/B-Divyesh/sf-vault-cross-search/releases/download/v0.1.6/");
     }
 
     const fixtureDir = join(root, "fixture");
@@ -79,13 +79,13 @@ test("@claim:verified-installers verifies release checksums before installing", 
   }
 });
 
-test("@claim:installer-signing-status shows that publisher signing is not configured", async ({ page }, testInfo) => {
+test("@claim:installer-signing-status shows that installers lack verified-publisher signatures", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "repository release check runs once");
   await page.goto("/");
-  await expect(page.getByText("Installer publisher signing is not configured.", { exact: false })).toBeVisible();
+  await expect(page.getByText("The installers are not signed by a verified publisher.", { exact: true })).toBeVisible();
   const workflow = readFileSync(".github/workflows/release.yml", "utf8");
   expect(workflow).not.toMatch(/APPLE_CERTIFICATE|APPLE_SIGNING_IDENTITY|WINDOWS_CERT_PFX|TAURI_SIGNING_PRIVATE_KEY/);
-  expect(readFileSync("README.md", "utf8")).toContain("Installer publisher signing is not configured.");
-  expect(readFileSync("site/public/install.sh", "utf8")).toContain("Publisher signing is not configured");
-  expect(readFileSync("site/public/install.ps1", "utf8")).toContain("Publisher signing is not configured");
+  expect(readFileSync("README.md", "utf8")).toContain("The installers are not signed by a verified publisher.");
+  expect(readFileSync("site/public/install.sh", "utf8")).toContain("not signed by a verified publisher");
+  expect(readFileSync("site/public/install.ps1", "utf8")).toContain("not signed by a verified publisher");
 });

@@ -29,7 +29,7 @@ if [ "$(uname -s)" = "Darwin" ]; then
   [ -n "$APP" ] || { hdiutil detach "$MOUNT" -quiet; echo "No application found in disk image." >&2; exit 1; }
   cp -R "$APP" /Applications/
   hdiutil detach "$MOUNT" -quiet
-  echo "Installed Vault Cross Search in /Applications. Publisher signing is not configured, so right-click then Open may be required."
+  echo "Installed Vault Cross Search in /Applications. The installer is not signed by a verified publisher."
 else
   INSTALL_DIR="${VCS_INSTALL_DIR:-$HOME/.local/bin}"
   DEST="$INSTALL_DIR/vault-cross-search.AppImage"

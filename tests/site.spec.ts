@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 
 const DEMO_URL = "/?demo=1";
 
@@ -45,8 +45,8 @@ async function installFirstRunDesktopFixture(page: import("@playwright/test").Pa
   await page.addInitScript(() => {
     const vaults: Array<{ id: string; name: string; entries: number; unlocked: boolean }> = [];
     const sampleEntries = [
-      { id: "sample-vpn", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme VPN", username: "sample.operator", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
-      { id: "sample-status", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme status", username: "sample.on-call", url: "https://status.acme.example", group: "Operations / On-call" }
+      { id: "sample-vpn", vaultId: "sample", vaultName: "Sample vault.kdbx", title: "Acme VPN", username: "sample.operator", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+      { id: "sample-status", vaultId: "sample", vaultName: "Sample vault.kdbx", title: "Acme status", username: "sample.on-call", url: "https://status.acme.example", group: "Operations / On-call" }
     ];
     Object.assign(window, {
       __TAURI_INTERNALS__: {
@@ -54,7 +54,7 @@ async function installFirstRunDesktopFixture(page: import("@playwright/test").Pa
           if (command === "session_state") return { vaults, locked: vaults.length === 0, minutesRemaining: 15 };
           if (command === "load_sample_project") {
             if (vaults.length) throw new Error("sample session already loaded");
-            vaults.push({ id: "sample", name: "Sample project.kdbx", entries: sampleEntries.length, unlocked: true });
+            vaults.push({ id: "sample", name: "Sample vault.kdbx", entries: sampleEntries.length, unlocked: true });
             return vaults[0];
           }
           if (command === "search_entries") return sampleEntries;
@@ -133,16 +133,33 @@ test("@claim:demo-boundary uses no native vault or file access", async ({ page }
   expect(await page.evaluate(() => (window as unknown as { __demoBoundaryCalls: string[] }).__demoBoundaryCalls)).toEqual([]);
 });
 
-test("@claim:download-on-demand avoids GitHub until a visitor explicitly asks for a download", async ({ page }) => {
-  let githubRequests = 0;
-  await page.route("https://api.github.com/**", async (route) => {
-    githubRequests += 1;
-    await route.fulfill({ json: { assets: [{ name: "linux-x64-Vault.AppImage", browser_download_url: "https://example.test/Vault.AppImage" }] } });
-  });
-  await page.goto("/");
-  expect(githubRequests).toBe(0);
-  await page.getByRole("link", { name: "Download the desktop app" }).click();
-  await expect.poll(() => githubRequests).toBe(1);
+test("@claim:download-on-demand asks GitHub only after a click and chooses the visitor's platform", async ({ browser }) => {
+  const cases = [
+    { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", asset: "macos-x64-Vault.dmg" },
+    { userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", asset: "windows-x64-Vault-setup.exe" },
+    { userAgent: "Mozilla/5.0 (X11; Linux x86_64)", asset: "linux-x64-Vault.AppImage" }
+  ];
+  const assets = cases.map(({ asset }) => ({ name: asset, browser_download_url: `https://downloads.example/${asset}` }));
+  for (const downloadCase of cases) {
+    const context = await browser.newContext({ userAgent: downloadCase.userAgent });
+    const downloadPage = await context.newPage();
+    let githubRequests = 0;
+    let selectedAsset = "";
+    await downloadPage.route("https://api.github.com/**", async (route) => {
+      githubRequests += 1;
+      await route.fulfill({ json: { assets } });
+    });
+    await downloadPage.route("https://downloads.example/**", async (route) => {
+      selectedAsset = new URL(route.request().url()).pathname.slice(1);
+      await route.fulfill({ contentType: "application/octet-stream", body: "fixture" });
+    });
+    await downloadPage.goto("http://127.0.0.1:4173/");
+    expect(githubRequests).toBe(0);
+    await downloadPage.getByRole("link", { name: "Download the desktop app" }).click();
+    await expect.poll(() => selectedAsset).toBe(downloadCase.asset);
+    expect(githubRequests).toBe(1);
+    await context.close();
+  }
 });
 
 test("@claim:site-resource-privacy loads site and policy pages without third-party resources", async ({ page }) => {
@@ -171,7 +188,35 @@ test("@claim:website-install-copy copies only the displayed public install comma
   const visibleCommand = await command.locator("code").innerText();
   await command.click();
   expect(await page.evaluate(() => (window as unknown as { __clipboardWrites: string[] }).__clipboardWrites)).toEqual([visibleCommand]);
-  await expect(command).toContainText("Copied");
+  await expect(command).toContainText("Install command copied");
+});
+
+test("@claim:original-artwork verifies the generated hero source, prompt, derivatives, and disclosure", async ({ page }) => {
+  const source = "assets/src/topographic-vaults.png";
+  const sidecars = ["assets/src/topographic-vaults.json", "assets/src/topographic-vaults.png.json"];
+  expect(existsSync(source)).toBe(true);
+  expect(statSync(source).size).toBeGreaterThan(100_000);
+  for (const sidecar of sidecars) {
+    const provenance = JSON.parse(readFileSync(sidecar, "utf8")) as { prompt: string; model?: string; deployment?: string };
+    expect(provenance.prompt).toContain("topographic field map");
+    expect(provenance.model ?? provenance.deployment).toMatch(/factory-image/);
+  }
+  const design = readFileSync(".factory/design.md", "utf8");
+  expect(design).toContain("generated specifically for this product");
+  expect(design).toContain("2026-08-28");
+  await page.goto("/");
+  await expect(page.getByText("Hero artwork was generated for this product.", { exact: true })).toBeVisible();
+  const image = page.locator(".hero-art img");
+  await expect(image).toBeVisible();
+  await expect(image).toHaveAttribute("width", "1280");
+  await expect(image).toHaveAttribute("height", "853");
+  expect(await image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+  for (const derivative of ["site/public/assets/topographic-vaults-768.avif", "site/public/assets/topographic-vaults-1280.avif", "site/public/assets/topographic-vaults-768.webp", "site/public/assets/topographic-vaults-1280.webp"]) {
+    expect(existsSync(derivative)).toBe(true);
+    expect(statSync(derivative).size).toBeGreaterThan(10_000);
+  }
+  await expect(page.locator('.hero-art source[type="image/avif"]')).toHaveAttribute("srcset", /topographic-vaults-768\.avif.+topographic-vaults-1280\.avif/);
+  await expect(page.locator('.hero-art source[type="image/webp"]')).toHaveAttribute("srcset", /topographic-vaults-768\.webp.+topographic-vaults-1280\.webp/);
 });
 
 test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, crash-reporting, or sync request", async ({ page }, testInfo) => {
@@ -240,7 +285,7 @@ test("@claim:desktop-sample-project loads the bundled project from the Tauri fir
   await expect(page.getByLabel("Search unlocked vaults")).toHaveValue("acme");
   await expect(page.locator("#status")).toHaveText("2 matches across 1 vault");
   await expect(page.getByRole("option")).toHaveCount(2);
-  await expect(page.locator("#vault-list")).toContainText("Sample project.kdbx");
+  await expect(page.locator("#vault-list")).toContainText("Sample vault.kdbx");
   await expect(page.locator("#results")).toContainText("Acme VPN");
 });
 
@@ -259,10 +304,10 @@ test("@claim:one-time-pricing shows literal pricing while purchase remains unava
   await expect(dialog.locator('a[href*="/checkout"]')).toHaveCount(0);
   await page.goto("/terms/");
   await expect(page.locator("main")).toContainText("The planned unlimited-vault license is $19 once, with no subscription.");
-  await expect(page.locator("main")).toContainText("Purchases are not open while checkout registration is pending.");
+  await expect(page.locator("main")).toContainText("Purchases are not open yet.");
   const readme = readFileSync("README.md", "utf8");
   expect(readme).toContain("The planned unlimited-vault license is $19 once, with no subscription.");
-  expect(readme).toContain("Purchases remain unavailable until checkout registration is complete.");
+  expect(readme).toContain("Purchases are not open yet.");
   expect(readFileSync("site/index.html", "utf8") + readFileSync("src/main.ts", "utf8")).not.toContain("/checkout");
 });
 
@@ -441,7 +486,7 @@ test("every public route uses the standard skip, header, footer, and build shell
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator("header.site-header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
-    await expect(page.getByText("Built by Param Factory · Build v0.1.5", { exact: true })).toBeVisible();
+    await expect(page.getByText("Built by Param Factory · Build v0.1.6", { exact: true })).toBeVisible();
     const skip = page.locator(".skip-link");
     await expect(skip).toHaveAttribute("href", "#main");
     await page.keyboard.press("Tab");

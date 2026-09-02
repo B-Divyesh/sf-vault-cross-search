@@ -26,15 +26,15 @@ try {
   await page.addInitScript(() => {
     const vaults = [];
     const sampleEntries = [
-      { id: "sample-vpn", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme VPN", username: "sample.operator", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
-      { id: "sample-status", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme status", username: "sample.on-call", url: "https://status.acme.example", group: "Operations / On-call" }
+      { id: "sample-vpn", vaultId: "sample", vaultName: "Sample vault.kdbx", title: "Acme VPN", username: "sample.operator", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+      { id: "sample-status", vaultId: "sample", vaultName: "Sample vault.kdbx", title: "Acme status", username: "sample.on-call", url: "https://status.acme.example", group: "Operations / On-call" }
     ];
     Object.assign(window, {
       __TAURI_INTERNALS__: {
         invoke: async (command) => {
           if (command === "session_state") return { vaults, locked: vaults.length === 0, minutesRemaining: 15 };
           if (command === "load_sample_project") {
-            vaults.push({ id: "sample", name: "Sample project.kdbx", entries: sampleEntries.length, unlocked: true });
+            vaults.push({ id: "sample", name: "Sample vault.kdbx", entries: sampleEntries.length, unlocked: true });
             return vaults[0];
           }
           if (command === "search_entries") return sampleEntries;

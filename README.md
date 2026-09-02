@@ -1,6 +1,6 @@
 # Vault Cross Search
 
-Vault Cross Search is a local-first desktop utility for people who deliberately keep credentials in several KeePass-compatible (`.kdbx`) databases. Unlock selected vaults for one session, search title/username/URL/group metadata together, then open the owning database in its associated password app. Vaults are never merged or uploaded.
+Vault Cross Search is a desktop utility for people who keep credentials in several KeePass vaults (`.kdbx` files). Unlock chosen vaults for one session. Search title, username, URL, and group metadata together. Then open the owning vault in the password app set to handle it. Vaults are never merged or uploaded.
 
 Live download site: <https://vault-cross-search.sociobot.in>
 
@@ -8,20 +8,20 @@ Live download site: <https://vault-cross-search.sociobot.in>
 
 Open <https://vault-cross-search.sociobot.in/?demo=1> or choose **Try it with sample data** on the first screen. It loads six bundled records across Personal.kdbx, Work.kdbx, and Archive.kdbx; try searching acme, river, or operations.
 
-The installed desktop app also starts with **Load sample project**. It opens a fake bundled KDBX in a separate in-memory session, searches `acme` immediately, and lets you lock it before adding your own vault. The sample has no real credentials and does not use a file picker.
+The installed desktop app also starts with **Load sample project**. It opens a fake bundled vault in a separate session and searches `acme` immediately. Lock the sample before adding your own vault. The sample has no real credentials and does not use a file picker.
 
-The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Reset demo** restores the bundled records. **Start for real** discards the demo key and returns to the download page. The demo uses no file picker or desktop bridge, and every demo request stays on the product origin.
+The demo stores its sample data separately in this browser. **Reset demo** restores the bundled records. **Start for real** discards the sample and returns to the download page. The demo never opens a local file or calls the desktop app. It contacts only vault-cross-search.sociobot.in.
 
 ## What it does
 
-- Reads explicitly selected KDBX 4 databases locally, with optional key files.
+- Reads chosen KDBX 4 vaults on your device, with optional key files.
 - Builds an in-memory index of only title, username, URL, and group path.
 - Searches every unlocked vault with keyboard navigation (`Ctrl/⌘ K`, arrows, Enter).
-- Opens the result's owning database with the operating system's associated app.
-- Zeroes the metadata index on per-vault lock, lock-all, quit, or 15 minutes of inactivity.
-- Ships with no telemetry, cloud account, autofill, sync, or desktop clipboard writes. The website install buttons copy only their visible public install commands after you press Copy.
+- Opens the result's owning vault in the password app set to handle it.
+- Clears the metadata index when you lock a vault, lock all, quit, or wait 15 minutes.
+- Ships with no telemetry, cloud account, autofill, sync, or desktop clipboard writes. Website buttons copy their displayed command after you press **Copy install command**.
 
-The free plan supports two simultaneous vaults. The planned unlimited-vault license is $19 once, with no subscription. Purchases remain unavailable until checkout registration is complete. Existing tokens can still be restored. Safety and accessibility behavior is identical in both plans.
+The free plan supports two simultaneous vaults. The planned unlimited-vault license is $19 once, with no subscription. Purchases are not open yet. Existing tokens can still be restored. Safety and accessibility behavior is identical in both plans.
 
 ## Develop
 
@@ -39,7 +39,7 @@ The factory static deployment command is exactly `npm run build:site`; its outpu
 
 ## Install and release
 
-The landing page detects macOS, Windows, or Linux and resolves its main button from the release `latest.json` manifest. Installer publisher signing is not configured. Releases contain `.dmg`, `.msi`/`.exe`, `.AppImage`, and `.deb` bundles plus `SHA256SUMS`.
+After you choose **Download**, the landing page asks GitHub for the latest macOS, Windows, or Linux release. The installers are not signed by a verified publisher. Releases contain `.dmg`, `.msi`/`.exe`, `.AppImage`, and `.deb` bundles plus `SHA256SUMS`.
 
 Release asset names are normalized before upload, so the downloaded names and `SHA256SUMS` agree. After downloading an installer and `SHA256SUMS` into the same directory, verify them with `sha256sum -c SHA256SUMS`.
 
@@ -51,20 +51,20 @@ curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
 irm https://vault-cross-search.sociobot.in/install.ps1 | iex
 ```
 
-To publish the repaired v0.1.5 release after verification:
+To publish the repaired v0.1.6 release after verification:
 
 ```sh
-git tag v0.1.5
-git push origin main v0.1.5
+git tag v0.1.6
+git push origin main v0.1.6
 ```
 
 The tag triggers [the release workflow](.github/workflows/release.yml). Platform runners create installers; the publish job generates checksums and `latest.json` before attaching everything to one GitHub Release.
 
 ## Security model
 
-The Rust core receives the unlock credential and clears its owned password buffer immediately after key derivation. The decrypted database object is dropped after metadata extraction. The webview receives only the allowed metadata fields and opaque local identifiers. The metadata index stays in the in-memory Rust session and has no application-storage path.
+The Rust core receives the unlock credential and clears its password buffer immediately after key derivation. The unlocked vault is discarded after metadata extraction. The desktop window receives only the four searchable fields and random local IDs. The search index exists only while the app is open and is never saved.
 
-This initial version is not yet independently audited. It opens the owning database because KeePassXC does not expose a documented cross-platform interface for selecting an exact GUI entry. The matching title and group remain visible in Vault Cross Search so the user can finish navigation without copying secrets.
+This initial version is not yet independently audited. It opens the owning vault because KeePassXC cannot select an exact entry through a documented cross-platform interface. The matching title and group remain visible in Vault Cross Search so you can finish navigation without copying secrets.
 
 Please report security issues privately to `security@sociobot.in`.
 

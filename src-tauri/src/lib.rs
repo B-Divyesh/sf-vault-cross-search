@@ -19,7 +19,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop};
 
 const LOCK_AFTER: Duration = Duration::from_secs(15 * 60);
 const BUNDLED_SAMPLE_PATH: &str = "bundled://vault-cross-search-sample.kdbx";
-const BUNDLED_SAMPLE_NAME: &str = "Sample project.kdbx";
+const BUNDLED_SAMPLE_NAME: &str = "Sample vault.kdbx";
 const BUNDLED_SAMPLE_VAULT: &[u8] = include_bytes!("../resources/vault-cross-search-sample.kdbx");
 
 #[derive(Clone, Serialize, Zeroize, ZeroizeOnDrop)]
@@ -152,13 +152,13 @@ fn index_database(db: Database, vault_id: &str, vault_name: &str) -> Vec<Indexed
 fn load_bundled_sample_project(session: &mut Session) -> Result<VaultSummary, String> {
     session.expire_if_needed();
     if !session.vaults.is_empty() {
-        return Err("Lock the current session before loading the separate sample project.".into());
+        return Err("Lock the current session before loading the separate sample vault.".into());
     }
     let database = Database::open(
         &mut std::io::Cursor::new(BUNDLED_SAMPLE_VAULT),
         DatabaseKey::new().with_password("sample-only"),
     )
-    .map_err(|_| "The bundled sample project could not be opened.")?;
+    .map_err(|_| "The bundled sample vault could not be opened.")?;
     let id = Uuid::new_v4().to_string();
     let entries = index_database(database, &id, BUNDLED_SAMPLE_NAME);
     let summary = VaultSummary {
@@ -357,8 +357,9 @@ where
                 .into(),
         );
     }
-    opener(Path::new(&vault.path))
-        .map_err(|_| "Could not open the vault in its associated password app.".to_string())?;
+    opener(Path::new(&vault.path)).map_err(|_| {
+        "Could not open the vault in the password app set to handle it.".to_string()
+    })?;
     session.touch();
     Ok(())
 }
@@ -392,12 +393,14 @@ mod tests {
         assert!(session.vaults.is_empty());
     }
     #[test]
+    // @claim:session-lock
     fn claim_session_lock_clears_every_vault() {
         let mut session = populated_session();
         session.clear();
         assert!(session.vaults.is_empty() && session.last_access.is_none());
     }
     #[test]
+    // @claim:single-vault-lock
     fn claim_single_vault_lock_clears_only_that_vault() {
         let mut session = populated_session();
         session.vaults.push(OpenVault {
@@ -415,6 +418,7 @@ mod tests {
         assert!(session.last_access.is_none());
     }
     #[test]
+    // @claim:metadata-only
     fn claim_metadata_only_index_collects_only_allowed_fields() {
         let mut group = Group::new("Banking");
         let mut entry = Entry::new();
@@ -473,12 +477,14 @@ mod tests {
         }
     }
     #[test]
+    // @claim:credential-clear
     fn claim_unlock_credential_is_cleared_after_key_derivation() {
         let mut password = String::from("correct horse battery staple");
         let _key = database_key_from_password(&mut password);
         assert!(password.is_empty());
     }
     #[test]
+    // @claim:database-drop
     fn claim_decrypted_database_is_dropped_after_metadata_extraction() {
         let mut db = Database::new(Default::default());
         let mut group = Group::new("Private");
@@ -498,6 +504,7 @@ mod tests {
         assert!(!retained_session_value.contains("database-only-secret"));
     }
     #[test]
+    // @claim:memory-only-index
     fn claim_index_has_no_disk_persistence_path() {
         let core = include_str!("lib.rs").split("#[cfg(test)]").next().unwrap();
         assert!(core.contains("struct Session"));
@@ -520,6 +527,7 @@ mod tests {
         assert!(session.vaults.is_empty());
     }
     #[test]
+    // @claim:kdbx-unlock
     fn kdbx_round_trip_can_be_unlocked_and_indexed() {
         let mut db = Database::new(Default::default());
         let mut group = Group::new("Work");
@@ -555,6 +563,7 @@ mod tests {
         assert_eq!(index[0].username, "on-call");
     }
     #[test]
+    // @claim:optional-key-files
     fn claim_optional_key_file_unlock_and_invalid_key_recovery() {
         let valid_key_bytes = b"vault-cross-search-fixture-key";
         let invalid_key_bytes = b"wrong-fixture-key";
@@ -624,6 +633,7 @@ mod tests {
         .is_ok());
     }
     #[test]
+    // @claim:auto-lock
     fn claim_auto_lock_inactivity_expiry_locks_a_populated_session() {
         assert_eq!(LOCK_AFTER, Duration::from_secs(15 * 60));
         let mut session = Session::default();
@@ -647,6 +657,7 @@ mod tests {
         assert!(session.last_access.is_none());
     }
     #[test]
+    // @claim:quit-lock
     fn claim_quit_clears_the_populated_session() {
         let mut session = populated_session();
         clear_session_for_exit(&mut session);
@@ -654,6 +665,7 @@ mod tests {
         assert!(session.last_access.is_none());
     }
     #[test]
+    // @claim:associated-open
     fn claim_associated_app_receives_the_owning_vault_path() {
         let mut session = populated_session();
         let mut opened = PathBuf::new();
@@ -665,6 +677,7 @@ mod tests {
         assert_eq!(opened, PathBuf::from("/tmp/sample.kdbx"));
     }
     #[test]
+    // @claim:bundled-sample-vault
     fn claim_bundled_sample_project_is_a_real_kdbx_in_an_isolated_session() {
         let opened = Database::open(
             &mut Cursor::new(BUNDLED_SAMPLE_VAULT),
@@ -690,6 +703,7 @@ mod tests {
         assert!(session.vaults.is_empty());
     }
     #[test]
+    // @claim:no-secret-actions
     fn claim_desktop_has_no_clipboard_autofill_or_password_storage_paths() {
         let desktop = include_str!("../../src/main.ts");
         let core = include_str!("lib.rs").split("#[cfg(test)]").next().unwrap();
@@ -710,6 +724,7 @@ mod tests {
         assert!(!desktop.contains("localStorage.setItem(\"password"));
     }
     #[test]
+    // @claim:no-custody-sync
     fn claim_no_vault_custody_recovery_or_sync_path_exists() {
         let core = include_str!("lib.rs").split("#[cfg(test)]").next().unwrap();
         let desktop = include_str!("../../src/main.ts");

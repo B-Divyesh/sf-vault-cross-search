@@ -29,17 +29,17 @@
   },
   {
     "id": "demo-boundary",
-    "claim": "The sample demo uses bundled records without invoking a file picker or desktop bridge.",
+    "claim": "The sample demo uses bundled records without opening a file picker or calling the desktop app.",
     "where": "Demo scope note and README",
     "test": "npx playwright test --grep @claim:demo-boundary",
     "sandbox": "Fresh browser context at /?demo=1 with instrumented file-picker and Tauri bridge functions; search and reset; assert no native call and no file input."
   },
   {
     "id": "download-on-demand",
-    "claim": "The download page contacts GitHub only after a visitor chooses Download the desktop app.",
-    "where": "Landing-page download note and privacy policy",
+    "claim": "After a visitor chooses Download the desktop app, the landing page asks GitHub for the latest macOS, Windows, or Linux release.",
+    "where": "Landing-page download action and note, privacy policy, README",
     "test": "npx playwright test --grep @claim:download-on-demand",
-    "sandbox": "Fresh browser context at /; intercept GitHub API; assert no cold-load request and one request after explicit download action."
+    "sandbox": "Fresh browser contexts with macOS, Windows, and Linux user agents; intercept the GitHub API and release assets; assert no cold-load request, one request after the explicit action, and the matching platform asset."
   },
   {
     "id": "site-resource-privacy",
@@ -50,10 +50,17 @@
   },
   {
     "id": "website-install-copy",
-    "claim": "Website Copy buttons place only their displayed public install command on the clipboard after an explicit click.",
+    "claim": "Website Copy install command buttons place only their displayed public command on the clipboard after an explicit click.",
     "where": "Landing install section and privacy policy",
     "test": "npx playwright test --grep @claim:website-install-copy",
-    "sandbox": "Fresh browser context with an instrumented clipboard; assert no write on load, click the first Copy button, and assert the sole write exactly equals its visible command."
+    "sandbox": "Fresh browser context with an instrumented clipboard; assert no write on load, click the first Copy install command button, and assert the sole write exactly equals its visible command."
+  },
+  {
+    "id": "original-artwork",
+    "claim": "The hero artwork was generated for this product.",
+    "where": "Landing footer",
+    "test": "npx playwright test --grep @claim:original-artwork",
+    "sandbox": "Inspect the original image and both prompt sidecars, assert the dated provenance in the visual thesis, load the rendered 1280×853 hero, and verify its AVIF and WebP sources."
   },
   {
     "id": "metadata-only",
@@ -64,17 +71,17 @@
   },
   {
     "id": "kdbx-unlock",
-    "claim": "The desktop core unlocks a KDBX 4 database and extracts its searchable metadata.",
+    "claim": "The desktop core unlocks a KDBX 4 vault and extracts its searchable metadata.",
     "where": "README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml kdbx_round_trip_can_be_unlocked_and_indexed",
-    "sandbox": "Generate a KDBX 4 database in memory, save it with a fixture password, reopen it, and assert its title, username, and group metadata."
+    "sandbox": "Generate a KDBX 4 vault in memory, save it with a fixture password, reopen it, and assert its title, username, and group metadata."
   },
   {
     "id": "optional-key-files",
-    "claim": "The desktop core unlocks KDBX 4 databases with an optional key file and recovers after a wrong or missing key file.",
+    "claim": "The desktop core unlocks KDBX 4 vaults with an optional key file and recovers after a wrong or missing key file.",
     "where": "README and desktop unlock dialog",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_optional_key_file_unlock_and_invalid_key_recovery",
-    "sandbox": "Generate a KDBX 4 database protected by a password and key-file fixture; reject a different key and a missing file; then unlock with the matching key and assert indexed metadata."
+    "sandbox": "Generate a KDBX 4 vault protected by a password and key-file fixture; reject a different key and a missing file; then unlock with the matching key and assert indexed metadata."
   },
   {
     "id": "credential-clear",
@@ -85,7 +92,7 @@
   },
   {
     "id": "database-drop",
-    "claim": "The decrypted database object is consumed during metadata extraction and is not retained in the session.",
+    "claim": "The unlocked vault object is consumed during metadata extraction and is not retained in the session.",
     "where": "README security model",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_decrypted_database_is_dropped_after_metadata_extraction",
     "sandbox": "In-memory decrypted database with a protected secret; move it into extraction and assert the retained session value contains metadata but no database-only secret."
@@ -127,7 +134,7 @@
   },
   {
     "id": "associated-open",
-    "claim": "Opening a result sends the owning vault path to the operating system's associated-app opener.",
+    "claim": "Opening a result sends the owning vault path to the operating system's registered password app.",
     "where": "Landing page and README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_associated_app_receives_the_owning_vault_path",
     "sandbox": "Populated session with one indexed entry; invoke open through a recording opener; assert the owning .kdbx path is passed."
@@ -144,7 +151,7 @@
     "claim": "The Tauri first-run screen has Load sample project and searches the bundled fake vault in an isolated session.",
     "where": "Desktop first-run screen, landing walkthrough, README, and demo documentation",
     "test": "npx playwright test --grep @claim:desktop-sample-project",
-    "sandbox": "Fresh fixture-backed Tauri webview begins locked; activate Load sample project; assert the production UI renders its walkthrough, prefilled acme query, two owned results, and Sample project.kdbx session row."
+    "sandbox": "Fresh fixture-backed desktop window begins locked; activate Load sample project; assert the production UI renders its walkthrough, prefilled acme query, two owned results, and Sample vault.kdbx session row."
   },
   {
     "id": "desktop-no-observation",
@@ -225,7 +232,7 @@
   },
   {
     "id": "one-time-pricing",
-    "claim": "The planned unlimited-vault license is $19 once with no subscription, and purchase stays unavailable until checkout registration.",
+    "claim": "The planned unlimited-vault license is $19 once with no subscription, and purchases are not open yet.",
     "where": "Landing pricing, desktop license dialog, terms, and README",
     "test": "npx playwright test --grep @claim:one-time-pricing",
     "sandbox": "Open the landing pricing section, desktop license dialog, terms, and README; assert exact price, no-subscription and unavailable states, plus absence of checkout links."
@@ -239,7 +246,7 @@
   },
   {
     "id": "installer-signing-status",
-    "claim": "Installer publisher signing is not configured.",
+    "claim": "The installers are not signed by a verified publisher.",
     "where": "Landing install note and README",
     "test": "npx playwright test tests/installers.spec.ts --grep @claim:installer-signing-status --project=desktop",
     "sandbox": "Inspect the release workflow for absent Apple and Windows signing configuration and assert the exact disclosure on the landing page and in README."
