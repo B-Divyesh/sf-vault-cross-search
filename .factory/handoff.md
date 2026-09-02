@@ -1,78 +1,40 @@
-# Vault Cross Search — repair handoff v0.1.5
+# Vault Cross Search — adversarial review 2 handoff
 
 **Date:** 2026-09-02 UTC
-**Work order:** `vault-cross-search-repair-5`
-**Product:** `vault-cross-search` — Tauri 2 desktop app with static download site
 
-## Repair delivered
+**Work order:** `vault-cross-search-review-2`
 
-This repair closes both release blockers in independent verification 6 (`.factory/verification-6.md`) for candidate `223e6864b5bfdef9181c5ba45a8f7abf1ae286c4`.
+**Reviewed commit:** `2a930506dd2e52a29cd9cb033dbac6898c3d7fa8`
 
-1. **Truthful clipboard copy.** I first reproduced the contradiction: the live site said “No clipboard writes” while clicking its install control wrote `curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh`. The landing page, privacy policy, and README now distinguish the desktop guarantee (“never copies secret values”) from the website behavior (“Copy buttons place only the visible public install command on your clipboard”). `@claim:website-install-copy` instruments the clipboard and asserts no write at load plus exactly one, explicitly triggered write of the visible command.
-2. **Real first-run desktop sample.** The Tauri binary now compiles in `src-tauri/resources/vault-cross-search-sample.kdbx` (1,073 bytes), a fake two-record KeePass database. The empty Tauri screen has **Load sample project**, an in-app three-step walkthrough, and actual load/search/lock behavior. The core opens the embedded KDBX through the normal metadata-only index, only in an empty session, rejects mixing it with real vaults, and refuses to open its synthetic path in an associated password manager. The browser demo remains a separate browser sandbox and is explicitly not used as this feature’s substitute.
+**Verdict:** FAIL — zero blocking findings and eight minor findings
 
-The landing page now has a three-frame walkthrough captured from the fixture-backed Tauri interface, not browser-demo screenshots. `scripts/capture-desktop-walkthrough.mjs` can reproduce the source frames. Asset provenance is recorded in `.factory/design.md`.
+## What was done
 
-## Regression coverage
+- Reviewed the live product cold in fresh 390 × 844 and 1440 × 900 Chromium contexts.
+- Audited every landing-page and README sentence, heading, label, and action with word counts.
+- Exercised the one-click demo, realistic initial results, Reset demo, Start for real, storage isolation, and request isolation.
+- Ran all 35 commands from `.factory/claims.json` separately in a fresh clone.
+- Rechecked every finding from `.factory/review-1.md` against the live site and source; all eight remain fixed.
+- Checked route metadata, 404 behavior, deep links, Back/focus restoration, links, touch targets, Axe results, response headers, and visual identity.
+- Reviewed the brief for missing import, export, sync, or AI leverage; none is warranted.
 
-- `@claim:website-install-copy` — visible public website command only, after explicit Copy.
-- `claim_bundled_sample_project_is_a_real_kdbx_in_an_isolated_session` — opens the compiled resource, verifies both fake Acme records, verifies isolation, then clears it.
-- `@claim:desktop-sample-project` — production desktop UI flow from first run through prefilled `acme` results and its isolated vault row.
-- `vite.config.ts` ignores `src-tauri/target` while serving browser tests. This prevents the OS watcher exhaustion reproduced after a native build, so clean full-suite execution remains reliable.
+The full report is `.factory/review-2.md`. No product code was changed.
 
-`.factory/claims.json` now declares 35 claims; every exact command passed after the repair.
+## Verification
 
-## Verification evidence
-
-- `npm ci`: PASS.
-- `npm test`: PASS — 9 Vitest tests, 53 Playwright tests with 11 intentional cross-project skips, and 17 Rust tests.
-- All 35 commands declared in `.factory/claims.json`: PASS.
+- All 35 declared claim commands: PASS.
+- `CI=true CARGO_BUILD_JOBS=1 npm test`: PASS — 9 Vitest, 53 Playwright, 11 intentional project skips, 17 Rust.
 - `npm run typecheck`: PASS.
-- `npm run build`: PASS. Static initial JS is 7.44 kB raw / 2.92 kB gzip; CSS is 17.43 kB raw / 4.15 kB gzip. Desktop UI JS is 15.08 kB raw / 5.41 kB gzip.
-- `cargo fmt --manifest-path src-tauri/Cargo.toml --check`: PASS.
-- `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings`: PASS.
-- Linux native package: PASS for `src-tauri/target/release/bundle/deb/Vault Cross Search_0.1.5_amd64.deb`; inspected package metadata is `vault-cross-search`, `0.1.5`, `amd64`.
-- Local URL verifier: PASS (`.factory/evidence/v0.1.5-local/verify.json`) — title, `lang=en`, one H1, main landmark, image alternatives, labelled controls, and no console errors.
-- Playwright Axe coverage in the full suite: zero serious or critical findings at desktop and 390 px mobile. The requested standalone Axe CLI could not locate a system Chrome in this container, so the repository’s pinned Playwright Axe integration was used instead.
-- Production deployment verifier: PASS (`.factory/evidence/v0.1.5-live/verify.json`) at `https://vault-cross-search.sociobot.in/`: HTTP 200, 870 ms load, no console errors, title/lang/H1/main/alt/control checks pass. Managed TLS and CSP were confirmed; the live HTML contains both corrected clipboard statements. A live Playwright clipboard probe also asserted zero writes at load and one post-click write exactly equal to `curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh`.
+- `npm run build`: PASS — produced `dist/app` and `dist/site`.
+- Live home HTML, site JavaScript, and site CSS SHA-256 values exactly match the clean build.
+- `/opt/fleet/lib/verify-url.sh https://vault-cross-search.sociobot.in /tmp/vcs-review2-verify`: PASS — HTTP 200, 831 ms load, no console errors, title/lang/H1/main/alt/button checks passed.
+- Independent live Axe checks: zero violations on home, both demo URLs, Privacy, Terms, and 404.
+- Live link crawl: all intended internal pages/assets and GitHub destinations returned 200; an unknown route returned the designed 404 with HTTP 404.
 
-## Deployment and release
+The worker initially lacked GTK/GLib development packages. After installing the exact Ubuntu prerequisites declared in `.github/workflows/release.yml`, the claim matrix was restarted from a new clone and completed without failure.
 
-- Repair implementation commit: `022e179ebee6017662cf153edf9e205389ce9d82`.
-- Static site deployment: Azure Static Web App `sf-vault-cross-search`, production, completed successfully on 2026-09-02. Live URL: <https://vault-cross-search.sociobot.in>.
-- Desktop version: `0.1.5`. GitHub Actions run [`33582549137`](https://github.com/B-Divyesh/sf-vault-cross-search/actions/runs/33582549137) passed on macOS arm64, macOS x64, Windows x64, Linux x64, and publish. The published [`v0.1.5` release](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.5) contains both macOS DMGs, Windows EXE/MSI, Linux AppImage/DEB, `SHA256SUMS`, and `latest.json`.
-- Release consumer verification: `latest.json` is valid and names macOS arm64/x64, Windows x64, Linux AppImage, and Linux DEB. A freshly downloaded Linux DEB matched its published SHA-256: `b737d19fa6f8d47d82594add988d59dec8a881a9e380f2efe835c499dbdc1bf9`. A cold live Linux browser click fetched GitHub release metadata and downloaded `linux-x64-Vault.Cross.Search_0.1.5_amd64.AppImage`. The local worker's AppImage bundler had an environmental `linuxdeploy` failure, but the GitHub Linux release build succeeded and published the AppImage.
+## Findings left for the owner
 
-## Operator action
+The review records eight minor findings: one incorrect and unlisted README statement about `latest.json`, two other unlisted landing claims, one 24-word README sentence, generic Copy button labels, implementation jargon on the landing page and README, and inconsistent names for a KeePass vault. These keep the verdict at FAIL because the acceptance standard requires zero findings.
 
-- Apple notarization and Windows Authenticode remain unavailable until the owner supplies `APPLE_CERTIFICATE` and `WINDOWS_CERT_PFX`. Unsigned-download guidance remains visible on the site.
-- Checkout registration is still intentionally unavailable; no buy link is active.
-
-## Known product gaps
-
-None.
-
----
-
-## Independent verification v7 — PASS
-
-**Verified candidate:** `8b627032af98d6f6db509bd6c41e0eb8036ca574`
-**Verified URL:** <https://vault-cross-search.sociobot.in>
-**Date:** 2026-09-02 UTC
-
-Independent QA passed. The live HTML and hashed JavaScript exactly match this
-candidate's production build. Cold desktop and 390 px reads clearly state the
-job, audience, and first action; the one-click sample demo works, resets, and
-keeps its data separate. All 35 declared claim commands, `npm test`, type
-checking, formatting, and Vite production build passed. Live Playwright checks
-found no console/page errors, no third-party demo requests, and no serious or
-critical Axe issues. Response security headers and immutable asset caching are
-present.
-
-The published `v0.1.5` release contains macOS arm64/x64, Windows EXE/MSI, and
-Linux AppImage/DEB assets plus `SHA256SUMS` and `latest.json`. A fresh Linux
-DEB download verified against its published SHA-256. The worker needed the
-same GTK/WebKit packages declared in the release workflow for native Linux
-compilation; that is a documented environment prerequisite, not a product
-defect. `verification-7.md` contains the exact evidence and no defects were
-found.
+There are no blocking demo, product, privacy, test, accessibility, routing, link, or visual-identity defects in this round.
