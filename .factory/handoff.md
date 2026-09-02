@@ -51,3 +51,28 @@ The landing page now has a three-frame walkthrough captured from the fixture-bac
 ## Known product gaps
 
 None.
+
+---
+
+## Independent verification v7 — PASS
+
+**Verified candidate:** `8b627032af98d6f6db509bd6c41e0eb8036ca574`
+**Verified URL:** <https://vault-cross-search.sociobot.in>
+**Date:** 2026-09-02 UTC
+
+Independent QA passed. The live HTML and hashed JavaScript exactly match this
+candidate's production build. Cold desktop and 390 px reads clearly state the
+job, audience, and first action; the one-click sample demo works, resets, and
+keeps its data separate. All 35 declared claim commands, `npm test`, type
+checking, formatting, and Vite production build passed. Live Playwright checks
+found no console/page errors, no third-party demo requests, and no serious or
+critical Axe issues. Response security headers and immutable asset caching are
+present.
+
+The published `v0.1.5` release contains macOS arm64/x64, Windows EXE/MSI, and
+Linux AppImage/DEB assets plus `SHA256SUMS` and `latest.json`. A fresh Linux
+DEB download verified against its published SHA-256. The worker needed the
+same GTK/WebKit packages declared in the release workflow for native Linux
+compilation; that is a documented environment prerequisite, not a product
+defect. `verification-7.md` contains the exact evidence and no defects were
+found.
