@@ -30,3 +30,11 @@
 - Local and live Lighthouse reports: `.factory/evidence/lighthouse-local.json` and `.factory/evidence/lighthouse-live.json`.
 
 Deployment `cd368634-4854-49f6-80a8-1a5bd1204d6e` was checked cold at `https://vault-cross-search.sociobot.in` on 2026-09-01 UTC.
+
+## Retry 1 final verification — 2026-09-02 UTC
+
+The controller-reported linker bus error was treated as infrastructure recovery work, not as a test exemption. `cargo clean --manifest-path src-tauri/Cargo.toml` ran before a fresh `CI=true CARGO_BUILD_JOBS=1 npm run tauri build`; the completed Linux build produced `Vault Cross Search_0.1.4_amd64.deb` and `Vault Cross Search-0.1.4-1.x86_64.rpm` after the native linker stage.
+
+From a new `--no-local` clone of `2c1f525c0dc85ad96150776e4fbb02ec0c1fb6e6`, all 32 exact commands in `.factory/claims.json` passed. The complete suite also passed: 9 Vitest tests, 60 Playwright tests, 16 Rust tests, TypeScript check, `cargo fmt --check`, Clippy with `-D warnings`, install-script syntax, and both Vite builds.
+
+Static deployment `518621e1-d44f-44a7-80af-f74540bdaf5a` was then cold-checked at the live URL. `/opt/fleet/lib/verify-url.sh` passed with no console errors, one H1, a main landmark, `lang=en`, image alternatives, and labelled buttons; its output is `.factory/evidence/verify-live-retry1/verify.json`. A fresh 390×844 browser check re-ran F-1-2 through F-1-6 and F-1-8, while the pricing/no-checkout assertion re-ran F-1-1, F-1-5, and F-1-7b. The declared claim tests cover F-1-7a, F-1-7c, and F-1-7d. No review finding remains open.

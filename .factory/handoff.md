@@ -1,8 +1,8 @@
 # Vault Cross Search — perfection loop 1 handoff
 
-**Date:** 2026-09-01 UTC
+**Date:** 2026-09-02 UTC
 
-**Work order:** `vault-cross-search-polish-1`
+**Work order:** `vault-cross-search-polish-1-retry1`
 
 **Product:** `vault-cross-search` (`desktop-app`, Tauri 2 + static download site)
 
@@ -17,6 +17,7 @@
 - Added demo-native-boundary and installer-signing claims, narrowed unsupported README statements, and updated all claim tests.
 - Kept the product-specific topographic palette, typography, contours, locator mark, and generated artwork.
 - Bumped the desktop release to v0.1.4 and updated the release checksum fixtures.
+- Recovered the controller-reported native linker failure by clearing the Rust target, constraining Cargo to one build job in `.cargo/config.toml`, and completing a fresh native Tauri package build.
 
 ## Verification
 
@@ -35,6 +36,9 @@
 - Cold live URL verifier: PASS in 937 ms with no console errors, `lang=en`, one H1, main landmark, image alternatives, and button labels.
 - Cold live 390×844 check: PASS — all three first-screen facts and Privacy visible; demo banner, controls, and both Work.kdbx results visible; Reset demo restored all six samples; Start for real cleared demo storage; navigation and Back focus the H1; no valid-route console errors; no serious/critical axe findings; unknown route returned HTTP 404 with `Page not found`.
 - Built site payload: JS 7,441 bytes raw; CSS 15,975 bytes raw; self-hosted fonts 109,604 bytes; mobile AVIF hero 64,037 bytes.
+- Retry 1 clean clone at `2c1f525c0dc85ad96150776e4fbb02ec0c1fb6e6`: all 32 exact claim commands passed; full suite passed (9 Vitest, 60 Playwright, 16 Rust), plus typecheck, format, Clippy `-D warnings`, installer shell syntax, and both builds.
+- Retry 1 native package recovery: `cargo clean --manifest-path src-tauri/Cargo.toml`, then `CI=true CARGO_BUILD_JOBS=1 npm run tauri build`: PASS. Linux `.deb` and `.rpm` bundles completed after the native linker stage without a bus error.
+- Retry 1 cold live verifier: PASS after deployment `518621e1-d44f-44a7-80af-f74540bdaf5a`; no console errors, valid title/lang/main/H1/alt/control checks. A fresh 390×844 browser check passed home facts, Privacy header navigation, isolated demo search plus owned result, Reset demo, navigation/Back heading focus, plain pricing with no checkout promise, and HTTP 404 recovery.
 
 ## Evidence
 
@@ -50,17 +54,20 @@
 - `.factory/evidence/live-desktop-home-1440x900.png`
 - `.factory/evidence/live-404-390x844.png`
 - `.factory/evidence/verify-live/verify.json`
+- `.factory/evidence/verify-live-retry1/verify.json`
 - `.factory/evidence/lighthouse-live.json`
 - `.factory/evidence/lighthouse-local.json`
 
 ## Deployment and release
 
 - Product commit: `c4829292c2e51ac344f694d85e82c5f766eb6dab`; pushed to `main`.
+- Retry 1 native-build safeguard: `2c1f525c0dc85ad96150776e4fbb02ec0c1fb6e6`; pushed to `main` before deployment.
 - Tag and release: [`v0.1.4`](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.4).
 - Release workflow `33571441788`: PASS for macOS arm64, macOS x64, Windows x64, Linux x64, and publish.
 - Published assets: both macOS DMGs, Windows EXE/MSI, Linux AppImage/DEB, `SHA256SUMS`, and `latest.json`.
 - Release verification: `latest.json` names all four platform targets; the downloaded Linux DEB passed its published SHA-256 checksum; a cold live Linux click resolved to the v0.1.4 AppImage with no console errors.
 - Static deployment: `cd368634-4854-49f6-80a8-1a5bd1204d6e`.
+- Retry 1 static deployment: `518621e1-d44f-44a7-80af-f74540bdaf5a`.
 - Live URL: `https://vault-cross-search.sociobot.in` (HTTP 200 over managed TLS).
 
 ## Operator action
