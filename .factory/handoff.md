@@ -1,4 +1,24 @@
-# Vault Cross Search — perfection loop 1 handoff
+# Vault Cross Search — current handoff: FAIL
+
+## Independent verification 6 — 2026-09-02 UTC
+
+**Candidate:** `223e6864b5bfdef9181c5ba45a8f7abf1ae286c4`
+
+**Live URL:** <https://vault-cross-search.sociobot.in>
+**Verdict:** **FAIL — do not release.**
+
+The independent report is [`.factory/verification-6.md`](verification-6.md). All 30 declared claims passed after documented Linux desktop prerequisites were installed; `npm test`, typecheck, format, Clippy, production build, live deployment parity, release checksum, Axe, and Lighthouse checks also passed.
+
+Release-blocking defects remain:
+
+1. The live landing claims **“No clipboard writes”**, but its two install-copy buttons call `navigator.clipboard.writeText`. The existing desktop-only claim does not cover the contradictory website behavior.
+2. The Tauri desktop app has no bundled sample vault or first-run **Load sample project** action. The browser-only demo expressly has no desktop bridge and cannot replace the required desktop sample-project flow or walkthrough.
+
+The report contains exact reproductions, evidence, remediation, and the rate-limit scope note. This section supersedes the historical builder handoff below.
+
+---
+
+# Vault Cross Search — historical builder perfection-loop handoff
 
 **Date:** 2026-09-02 UTC
 
