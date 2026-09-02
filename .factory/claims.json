@@ -49,6 +49,13 @@
     "sandbox": "Fresh browser context; record requests across home, privacy, and terms; assert every request is same-origin."
   },
   {
+    "id": "website-install-copy",
+    "claim": "Website Copy buttons place only their displayed public install command on the clipboard after an explicit click.",
+    "where": "Landing install section and privacy policy",
+    "test": "npx playwright test --grep @claim:website-install-copy",
+    "sandbox": "Fresh browser context with an instrumented clipboard; assert no write on load, click the first Copy button, and assert the sole write exactly equals its visible command."
+  },
+  {
     "id": "metadata-only",
     "claim": "The desktop index includes title, username, URL, and group path, not passwords, notes, attachments, or custom protected fields.",
     "where": "Landing page, privacy policy, README",
@@ -126,6 +133,20 @@
     "sandbox": "Populated session with one indexed entry; invoke open through a recording opener; assert the owning .kdbx path is passed."
   },
   {
+    "id": "bundled-sample-vault",
+    "claim": "The desktop binary embeds a readable fake KDBX sample vault with two searchable records.",
+    "where": "Desktop first-run screen, landing walkthrough, README, and demo documentation",
+    "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_bundled_sample_project_is_a_real_kdbx_in_an_isolated_session",
+    "sandbox": "Open the compile-time bundled KDBX with its non-secret sample key, assert both fake Acme metadata records, load it into an empty in-memory session, reject mixing it with an existing session, then clear it."
+  },
+  {
+    "id": "desktop-sample-project",
+    "claim": "The Tauri first-run screen has Load sample project and searches the bundled fake vault in an isolated session.",
+    "where": "Desktop first-run screen, landing walkthrough, README, and demo documentation",
+    "test": "npx playwright test --grep @claim:desktop-sample-project",
+    "sandbox": "Fresh fixture-backed Tauri webview begins locked; activate Load sample project; assert the production UI renders its walkthrough, prefilled acme query, two owned results, and Sample project.kdbx session row."
+  },
+  {
     "id": "desktop-no-observation",
     "claim": "Normal desktop use makes no analytics, telemetry, advertising, crash-reporting, or background-sync request.",
     "where": "Landing page, privacy policy, README",
@@ -148,7 +169,7 @@
   },
   {
     "id": "no-secret-actions",
-    "claim": "The desktop app has no clipboard write, autofill, or password-persistence path.",
+    "claim": "The desktop app never copies secret values, autofills, or stores passwords.",
     "where": "Landing page, privacy policy, README",
     "test": "cargo test --manifest-path src-tauri/Cargo.toml claim_desktop_has_no_clipboard_autofill_or_password_storage_paths",
     "sandbox": "Inspect the shipped desktop UI and Rust core boundaries for clipboard, autofill, local password storage, and file-write APIs."

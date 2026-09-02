@@ -1,4 +1,4 @@
-# Copy audit — 2026-09-01 polish 1
+# Copy audit — 2026-09-02 repair
 
 All landing-page sentences, headings, labels, facts, and actions were read aloud and counted. The first screen states the job, audience, first action, and three facts in one breath.
 
@@ -42,11 +42,11 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 | The desktop index exists only in process memory. | 8 | Pass |
 | Lock a vault, lock all vaults, quit, or let the timer run out to clear it. | 16 | Pass |
 | No analytics or telemetry | 4 | Pass |
-| No clipboard writes | 3 | Pass |
+| The desktop app never copies secret values | 7 | Pass |
 | No password storage or autofill | 5 | Pass |
 | No background sync | 3 | Pass |
 
-## Pricing, install, and footer
+## Desktop walkthrough, pricing, install, and footer
 
 | Copy | Words | Result |
 | --- | ---: | --- |
@@ -63,7 +63,17 @@ All landing-page sentences, headings, labels, facts, and actions were read aloud
 | Purchases are not open yet. | 6 | Pass |
 | Purchase unavailable | 2 | Pass |
 | Checkout registration is pending. | 4 | Pass |
+| Desktop walkthrough | 2 | Pass |
+| Try the installed app with a fake vault | 9 | Pass |
+| The first screen loads a bundled fake KeePass project. | 9 | Pass |
+| 1. Load sample project | 4 | Pass |
+| Open the bundled fake KDBX in a separate session. | 9 | Pass |
+| 2. Search its metadata | 4 | Pass |
+| Try acme to see title, username, URL, group, and owner. | 10 | Pass |
+| 3. Lock the sample | 4 | Pass |
+| Clear the session before adding your own vault. | 9 | Pass |
 | One-line install | 2 | Pass |
+| Copy buttons place only the visible public install command on your clipboard. | 12 | Pass |
 | Installer publisher signing is not configured. | 6 | Pass |
 | macOS may require right-click → Open; Windows may show SmartScreen. | 9 | Pass |
 | Checksums are published with every release. | 6 | Pass |
@@ -82,5 +92,6 @@ No sentence exceeds 22 words. No banned marketing word appears; “Unlock” nam
 | Searchable non-secret record data | metadata |
 | Packaged browser try-out | demo |
 | Actual desktop software | desktop app |
+| Built-in fake KeePass database | sample project |
 | Separate demo browser key prefix | demo:vault-cross-search:* |
 | Paid state | license |

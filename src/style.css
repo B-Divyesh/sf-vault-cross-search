@@ -17,3 +17,7 @@ dialog{border:1px solid var(--line);border-radius:18px;background:var(--surface)
 .brand{min-height:44px}
 .search-box input{min-height:44px}
 .legal-small a{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+
+/* The first run is a usable, isolated practice session—not a browser-only demo. */
+.first-run-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.walkthrough-title{width:min(100%,540px);margin:24px 0 0;font-size:16px;text-align:left}.first-run-walkthrough{width:min(100%,540px);list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px;text-align:left}.first-run-walkthrough li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 82%,var(--soft))}.first-run-walkthrough li>span{font:700 12px/24px ui-monospace,monospace;color:var(--signal);text-align:center;border:1px solid var(--line);border-radius:50%}.first-run-walkthrough div{display:flex;flex-direction:column}.first-run-walkthrough small{margin:2px 0 0;color:var(--muted);font-size:12px}.map-empty .first-run-walkthrough+small{margin-top:16px}
+@media(max-width:720px){.first-run-actions{justify-content:flex-start}.first-run-actions .primary-button,.first-run-actions .quiet-button{min-width:100%}.first-run-walkthrough{width:100%}}

@@ -101,7 +101,7 @@ function renderResults() {
   const host = $("#results");
   if (!state.vaults.length) {
     $("#status").textContent = "";
-    host.innerHTML = `<div class="map-empty"><div class="map-art" aria-hidden="true"><span></span></div><p class="eyebrow">Index clear</p><h2>Your vaults remain separate.</h2><p>Add and unlock local KeePass vaults. Only titles, usernames, URLs, and group paths are indexed for this session.</p><button class="primary-button" data-add-empty type="button">Add your first vault</button><small>Nothing is uploaded. Nothing is written to disk.</small></div>`;
+    host.innerHTML = `<div class="map-empty"><div class="map-art" aria-hidden="true"><span></span></div><p class="eyebrow">Index clear</p><h2>Try a fake sample first.</h2><p>Load a bundled KeePass project, search its metadata, then lock it. No real credentials or vault file are used.</p><div class="first-run-actions"><button class="primary-button" data-load-sample type="button">Load sample project</button><button class="quiet-button" data-add-empty type="button">Add your first vault</button></div><h3 class="walkthrough-title" id="first-run-walkthrough">First-run walkthrough</h3><ol class="first-run-walkthrough" aria-labelledby="first-run-walkthrough"><li><span>1</span><div><strong>Load sample project</strong><small>Opens a bundled fake .kdbx in this session only.</small></div></li><li><span>2</span><div><strong>Search “acme”</strong><small>See the title, username, URL, group, and owning vault.</small></div></li><li><span>3</span><div><strong>Lock all</strong><small>Clear the sample index before adding your own vault.</small></div></li></ol><small>Nothing is uploaded. Nothing is written to disk.</small></div>`;
     return;
   }
   if (!query) {
@@ -141,6 +141,26 @@ async function chooseVault() {
   $("#unlock-error").textContent = "";
   ($("#unlock-dialog") as HTMLDialogElement).showModal();
   requestAnimationFrame(() => ($("#vault-password") as HTMLInputElement).focus());
+}
+
+async function loadSampleProject() {
+  if (!isTauri) {
+    $("#status").textContent = "Open the installed desktop app to load its bundled sample project.";
+    return;
+  }
+  const button = document.querySelector<HTMLButtonElement>("[data-load-sample]");
+  if (button) { button.disabled = true; button.textContent = "Loading sample project…"; }
+  try {
+    await invoke("load_sample_project");
+    await refreshState();
+    searchInput.value = "acme";
+    await runSearch();
+    searchInput.focus();
+  } catch (error) {
+    $("#status").textContent = String(error);
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "Load sample project"; }
+  }
 }
 
 async function runSearch() {
@@ -197,6 +217,7 @@ async function verifyLicense(token: string, quiet = false) {
 document.addEventListener("click", async (event) => {
   const target = event.target as HTMLElement;
   if (target.closest("#add-vault") || target.closest("[data-add-empty]")) await chooseVault();
+  if (target.closest("[data-load-sample]")) await loadSampleProject();
   const lock = target.closest<HTMLButtonElement>("[data-lock-vault]");
   if (lock && isTauri) { await invoke("lock_vault", { vaultId: lock.dataset.lockVault }); await refreshState(); }
   const result = target.closest<HTMLButtonElement>("[data-result]");

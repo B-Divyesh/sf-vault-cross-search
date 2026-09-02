@@ -45,6 +45,8 @@ Final prompt: “A wide editorial illustration for a privacy-first desktop utili
 
 The hero is generated specifically for this product using the factory image deployment (OpenAI image model through Azure AI Foundry), 2026-08-28. Source PNG and prompt sidecar live in `assets/src/`; optimized WebP/AVIF derivatives live with the site. The 1200×630 social card is a center crop of the same generated source, exported locally on 2026-08-30. Generated imagery is disclosed in the footer. Icons and the locator mark are original inline SVG/CSS geometry authored in-repository under the project MIT license.
 
+The three desktop walkthrough frames are original product screenshots captured on 2026-09-02 from the fixture-backed Tauri webview by `scripts/capture-desktop-walkthrough.mjs`. They show the exact first-run screen, bundled fake sample search, and cleared sample state; optimized WebP files live in `site/public/assets/`. They are not stock imagery or browser-demo screens.
+
 ## Accessibility and themes
 
 Both light and dark themes are first-class and follow the OS by default, with an explicit toggle. Text combinations are selected for WCAG AA (4.5:1 minimum); state always includes a word or icon, not color alone. Focus uses a 3px signal-orange outline plus offset. The illustration has concise alternative text; purely decorative contours are hidden from assistive technology.

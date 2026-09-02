@@ -18,6 +18,9 @@ use uuid::Uuid;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 const LOCK_AFTER: Duration = Duration::from_secs(15 * 60);
+const BUNDLED_SAMPLE_PATH: &str = "bundled://vault-cross-search-sample.kdbx";
+const BUNDLED_SAMPLE_NAME: &str = "Sample project.kdbx";
+const BUNDLED_SAMPLE_VAULT: &[u8] = include_bytes!("../resources/vault-cross-search-sample.kdbx");
 
 #[derive(Clone, Serialize, Zeroize, ZeroizeOnDrop)]
 #[serde(rename_all = "camelCase")]
@@ -146,6 +149,34 @@ fn index_database(db: Database, vault_id: &str, vault_name: &str) -> Vec<Indexed
     entries
 }
 
+fn load_bundled_sample_project(session: &mut Session) -> Result<VaultSummary, String> {
+    session.expire_if_needed();
+    if !session.vaults.is_empty() {
+        return Err("Lock the current session before loading the separate sample project.".into());
+    }
+    let database = Database::open(
+        &mut std::io::Cursor::new(BUNDLED_SAMPLE_VAULT),
+        DatabaseKey::new().with_password("sample-only"),
+    )
+    .map_err(|_| "The bundled sample project could not be opened.")?;
+    let id = Uuid::new_v4().to_string();
+    let entries = index_database(database, &id, BUNDLED_SAMPLE_NAME);
+    let summary = VaultSummary {
+        id: id.clone(),
+        name: BUNDLED_SAMPLE_NAME.into(),
+        entries: entries.len(),
+        unlocked: true,
+    };
+    session.vaults.push(OpenVault {
+        id,
+        name: BUNDLED_SAMPLE_NAME.into(),
+        path: BUNDLED_SAMPLE_PATH.into(),
+        entries,
+    });
+    session.touch();
+    Ok(summary)
+}
+
 #[tauri::command]
 fn unlock_vault(
     path: String,
@@ -197,6 +228,15 @@ fn unlock_vault(
     });
     session.touch();
     Ok(summary)
+}
+
+#[tauri::command]
+fn load_sample_project(state: State<AppState>) -> Result<VaultSummary, String> {
+    let mut session = state
+        .0
+        .lock()
+        .map_err(|_| "The local session is unavailable.")?;
+    load_bundled_sample_project(&mut session)
 }
 
 #[tauri::command]
@@ -310,6 +350,12 @@ where
         .ok_or("The owning vault is no longer unlocked.")?;
     if !vault.entries.iter().any(|entry| entry.id == entry_id) {
         return Err("The selected entry is no longer in the session index.".into());
+    }
+    if vault.path == BUNDLED_SAMPLE_PATH {
+        return Err(
+            "This is a bundled fake sample. Add a local vault to open it in your password app."
+                .into(),
+        );
     }
     opener(Path::new(&vault.path))
         .map_err(|_| "Could not open the vault in its associated password app.".to_string())?;
@@ -619,6 +665,31 @@ mod tests {
         assert_eq!(opened, PathBuf::from("/tmp/sample.kdbx"));
     }
     #[test]
+    fn claim_bundled_sample_project_is_a_real_kdbx_in_an_isolated_session() {
+        let opened = Database::open(
+            &mut Cursor::new(BUNDLED_SAMPLE_VAULT),
+            DatabaseKey::new().with_password("sample-only"),
+        )
+        .expect("bundled sample is a readable KDBX database");
+        let indexed = index_database(opened, "fixture", BUNDLED_SAMPLE_NAME);
+        assert_eq!(indexed.len(), 2);
+        assert!(indexed.iter().any(|entry| entry.title == "Acme VPN"));
+        assert!(indexed.iter().any(|entry| entry.title == "Acme status"));
+        assert!(indexed
+            .iter()
+            .all(|entry| entry.vault_name == BUNDLED_SAMPLE_NAME));
+
+        let mut session = Session::default();
+        let summary = load_bundled_sample_project(&mut session).unwrap();
+        assert_eq!(summary.name, BUNDLED_SAMPLE_NAME);
+        assert_eq!(summary.entries, 2);
+        assert_eq!(session.vaults.len(), 1);
+        assert_eq!(session.vaults[0].path, BUNDLED_SAMPLE_PATH);
+        assert!(load_bundled_sample_project(&mut session).is_err());
+        session.clear();
+        assert!(session.vaults.is_empty());
+    }
+    #[test]
     fn claim_desktop_has_no_clipboard_autofill_or_password_storage_paths() {
         let desktop = include_str!("../../src/main.ts");
         let core = include_str!("lib.rs").split("#[cfg(test)]").next().unwrap();
@@ -728,6 +799,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             unlock_vault,
+            load_sample_project,
             search_entries,
             session_state,
             lock_vault,

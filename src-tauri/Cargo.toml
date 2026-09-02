@@ -1,6 +1,6 @@
 [package]
 name = "vault-cross-search"
-version = "0.1.4"
+version = "0.1.5"
 description = "Session-only metadata search across local KeePass vaults"
 authors = ["Param Factory"]
 license = "MIT"

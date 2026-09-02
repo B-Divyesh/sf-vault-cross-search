@@ -41,6 +41,31 @@ async function installDesktopFixture(page: import("@playwright/test").Page, opti
   }, options.multiVault === true);
 }
 
+async function installFirstRunDesktopFixture(page: import("@playwright/test").Page) {
+  await page.addInitScript(() => {
+    const vaults: Array<{ id: string; name: string; entries: number; unlocked: boolean }> = [];
+    const sampleEntries = [
+      { id: "sample-vpn", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme VPN", username: "sample.operator", url: "https://vpn.acme.example", group: "Infrastructure / Access" },
+      { id: "sample-status", vaultId: "sample", vaultName: "Sample project.kdbx", title: "Acme status", username: "sample.on-call", url: "https://status.acme.example", group: "Operations / On-call" }
+    ];
+    Object.assign(window, {
+      __TAURI_INTERNALS__: {
+        invoke: async (command: string) => {
+          if (command === "session_state") return { vaults, locked: vaults.length === 0, minutesRemaining: 15 };
+          if (command === "load_sample_project") {
+            if (vaults.length) throw new Error("sample session already loaded");
+            vaults.push({ id: "sample", name: "Sample project.kdbx", entries: sampleEntries.length, unlocked: true });
+            return vaults[0];
+          }
+          if (command === "search_entries") return sampleEntries;
+          if (command === "lock_all") { vaults.splice(0); return null; }
+          throw new Error(`Unexpected first-run fixture command: ${command}`);
+        }
+      }
+    });
+  });
+}
+
 test("@claim:demo-search searches bundled metadata across three separate sample vaults", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Try it with sample data" }).click();
@@ -129,6 +154,26 @@ test("@claim:site-resource-privacy loads site and policy pages without third-par
   expect(externalRequests).toEqual([]);
 });
 
+test("@claim:website-install-copy copies only the displayed public install command after an explicit click", async ({ page }) => {
+  await page.addInitScript(() => {
+    const writes: string[] = [];
+    Object.assign(window, { __clipboardWrites: writes });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async (value: string) => { writes.push(value); } }
+    });
+  });
+  await page.goto("/");
+  await expect(page.getByText("The desktop app never copies secret values", { exact: true })).toBeVisible();
+  await expect(page.getByText("No clipboard writes", { exact: true })).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { __clipboardWrites: string[] }).__clipboardWrites)).toEqual([]);
+  const command = page.locator("button[data-copy]").first();
+  const visibleCommand = await command.locator("code").innerText();
+  await command.click();
+  expect(await page.evaluate(() => (window as unknown as { __clipboardWrites: string[] }).__clipboardWrites)).toEqual([visibleCommand]);
+  await expect(command).toContainText("Copied");
+});
+
 test("@claim:desktop-no-observation makes no analytics, telemetry, advertising, crash-reporting, or sync request", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop", "desktop webview claim");
   const externalRequests: string[] = [];
@@ -183,6 +228,20 @@ test("@claim:desktop-multi-vault-search searches two unlocked desktop vaults and
   await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("Enter");
   await expect.poll(() => page.evaluate(() => (window as unknown as { __openedEntries: Array<Record<string, string>> }).__openedEntries[0])).toEqual({ vaultId: "personal", entryId: "billing" });
+});
+
+test("@claim:desktop-sample-project loads the bundled project from the Tauri first-run screen", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop", "desktop webview claim");
+  await installFirstRunDesktopFixture(page);
+  await page.goto("http://127.0.0.1:1420/");
+  await expect(page.getByRole("button", { name: "Load sample project" })).toBeVisible();
+  await expect(page.getByText("First-run walkthrough", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Load sample project" }).click();
+  await expect(page.getByLabel("Search unlocked vaults")).toHaveValue("acme");
+  await expect(page.locator("#status")).toHaveText("2 matches across 1 vault");
+  await expect(page.getByRole("option")).toHaveCount(2);
+  await expect(page.locator("#vault-list")).toContainText("Sample project.kdbx");
+  await expect(page.locator("#results")).toContainText("Acme VPN");
 });
 
 test("@claim:one-time-pricing shows literal pricing while purchase remains unavailable", async ({ page }, testInfo) => {
@@ -382,7 +441,7 @@ test("every public route uses the standard skip, header, footer, and build shell
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.locator("header.site-header")).toHaveCount(1);
     await expect(page.locator("footer")).toHaveCount(1);
-    await expect(page.getByText("Built by Param Factory · Build v0.1.4", { exact: true })).toBeVisible();
+    await expect(page.getByText("Built by Param Factory · Build v0.1.5", { exact: true })).toBeVisible();
     const skip = page.locator(".skip-link");
     await expect(skip).toHaveAttribute("href", "#main");
     await page.keyboard.press("Tab");

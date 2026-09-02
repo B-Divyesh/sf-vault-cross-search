@@ -8,6 +8,8 @@ Live download site: <https://vault-cross-search.sociobot.in>
 
 Open <https://vault-cross-search.sociobot.in/?demo=1> or choose **Try it with sample data** on the first screen. It loads six bundled records across Personal.kdbx, Work.kdbx, and Archive.kdbx; try searching acme, river, or operations.
 
+The installed desktop app also starts with **Load sample project**. It opens a fake bundled KDBX in a separate in-memory session, searches `acme` immediately, and lets you lock it before adding your own vault. The sample has no real credentials and does not use a file picker.
+
 The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Reset demo** restores the bundled records. **Start for real** discards the demo key and returns to the download page. The demo uses no file picker or desktop bridge, and every demo request stays on the product origin.
 
 ## What it does
@@ -17,7 +19,7 @@ The demo uses the separate browser key demo:vault-cross-search:sample-v1. **Rese
 - Searches every unlocked vault with keyboard navigation (`Ctrl/⌘ K`, arrows, Enter).
 - Opens the result's owning database with the operating system's associated app.
 - Zeroes the metadata index on per-vault lock, lock-all, quit, or 15 minutes of inactivity.
-- Ships with no telemetry, cloud account, autofill, sync, or clipboard writes.
+- Ships with no telemetry, cloud account, autofill, sync, or desktop clipboard writes. The website install buttons copy only their visible public install commands after you press Copy.
 
 The free plan supports two simultaneous vaults. The planned unlimited-vault license is $19 once, with no subscription. Purchases remain unavailable until checkout registration is complete. Existing tokens can still be restored. Safety and accessibility behavior is identical in both plans.
 
@@ -49,11 +51,11 @@ curl -fsSL https://vault-cross-search.sociobot.in/install.sh | sh
 irm https://vault-cross-search.sociobot.in/install.ps1 | iex
 ```
 
-To publish the repaired v0.1.4 release after verification:
+To publish the repaired v0.1.5 release after verification:
 
 ```sh
-git tag v0.1.4
-git push origin main v0.1.4
+git tag v0.1.5
+git push origin main v0.1.5
 ```
 
 The tag triggers [the release workflow](.github/workflows/release.yml). Platform runners create installers; the publish job generates checksums and `latest.json` before attaching everything to one GitHub Release.
