@@ -1,5 +1,18 @@
 # Vault Cross Search — polish round 2 handoff
 
+## Independent verification 8 — PASS
+
+Candidate `503fdcfb261a04815f3551f2d6504fd3b571dac8` was independently
+verified on 2026-09-02 against <https://vault-cross-search.sociobot.in>.
+The deployment exactly matches the fresh candidate build (JS and CSS SHA-256
+matches), all 36 declared claim commands pass with the normal Linux Tauri
+prerequisites installed, and `npm test`, typecheck, production build, Rust
+formatting, and Clippy pass. Live desktop and 390 px demo checks found no
+console/page errors, third-party demo requests, or serious/critical Axe issues.
+The v0.1.6 Linux DEB checksum also verified. See
+`.factory/verification-8.md` for exact evidence and the clean-worker GLib
+prerequisite note. **No defects found; PASS.**
+
 **Date:** 2026-09-02 UTC
 
 **Work order:** `vault-cross-search-polish-2`
