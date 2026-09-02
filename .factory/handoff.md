@@ -41,7 +41,7 @@ The landing page now has a three-frame walkthrough captured from the fixture-bac
 - Repair implementation commit: `022e179ebee6017662cf153edf9e205389ce9d82`.
 - Static site deployment: Azure Static Web App `sf-vault-cross-search`, production, completed successfully on 2026-09-02. Live URL: <https://vault-cross-search.sociobot.in>.
 - Desktop version: `0.1.5`. GitHub Actions run [`33582549137`](https://github.com/B-Divyesh/sf-vault-cross-search/actions/runs/33582549137) passed on macOS arm64, macOS x64, Windows x64, Linux x64, and publish. The published [`v0.1.5` release](https://github.com/B-Divyesh/sf-vault-cross-search/releases/tag/v0.1.5) contains both macOS DMGs, Windows EXE/MSI, Linux AppImage/DEB, `SHA256SUMS`, and `latest.json`.
-- Release consumer verification: `latest.json` is valid and names macOS arm64/x64, Windows x64, Linux AppImage, and Linux DEB. A freshly downloaded Linux DEB matched its published SHA-256: `b737d19fa6f8d47d82594add988d59dec8a881a9e380f2efe835c499dbdc1bf9`. The local worker's AppImage bundler had an environmental `linuxdeploy` failure, but the GitHub Linux release build succeeded and published the AppImage.
+- Release consumer verification: `latest.json` is valid and names macOS arm64/x64, Windows x64, Linux AppImage, and Linux DEB. A freshly downloaded Linux DEB matched its published SHA-256: `b737d19fa6f8d47d82594add988d59dec8a881a9e380f2efe835c499dbdc1bf9`. A cold live Linux browser click fetched GitHub release metadata and downloaded `linux-x64-Vault.Cross.Search_0.1.5_amd64.AppImage`. The local worker's AppImage bundler had an environmental `linuxdeploy` failure, but the GitHub Linux release build succeeded and published the AppImage.
 
 ## Operator action
 
