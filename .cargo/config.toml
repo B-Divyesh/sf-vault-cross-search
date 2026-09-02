@@ -1,0 +1,4 @@
+# Tauri's native Linux link step is memory intensive. Keep the workspace
+# deterministic and within the smallest CI worker's linker budget.
+[build]
+jobs = 1
